@@ -19,4 +19,6 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 
     @Query("SELECT p FROM Product p LEFT JOIN FETCH p.variants WHERE p.id = :id AND p.active = true")
     Optional<Product> findByIdAndActiveWithVariants(@Param("id") Long id);
+
+    boolean existsByCategoryId(Long categoryId);
 }

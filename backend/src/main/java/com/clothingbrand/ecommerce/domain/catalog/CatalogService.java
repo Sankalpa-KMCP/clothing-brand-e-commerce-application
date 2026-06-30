@@ -1,6 +1,9 @@
 package com.clothingbrand.ecommerce.domain.catalog;
 
 import com.clothingbrand.ecommerce.exception.ResourceNotFoundException;
+import com.clothingbrand.ecommerce.exception.DuplicateResourceException;
+import com.clothingbrand.ecommerce.exception.ResourceConflictException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -44,5 +47,53 @@ public class CatalogService {
         return productRepository.findByIdAndActiveWithVariants(id)
             .map(ProductDetailDto::fromEntity)
             .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + id));
+    }
+
+    @Transactional
+    public AdminCategoryResponseDto createCategory(AdminCategoryRequestDto requestDto) {
+        String trimmedName = requestDto.name().trim();
+
+        Category category = new Category();
+        category.setName(trimmedName);
+        category.setDescription(requestDto.description());
+        category.setImageUrl(requestDto.imageUrl());
+
+        try {
+            Category savedCategory = categoryRepository.save(category);
+            return AdminCategoryResponseDto.fromEntity(savedCategory);
+        } catch (DataIntegrityViolationException e) {
+            throw new DuplicateResourceException("Category name already exists");
+        }
+    }
+
+    @Transactional
+    public AdminCategoryResponseDto updateCategory(Long id, AdminCategoryRequestDto requestDto) {
+        Category category = categoryRepository.findById(id)
+            .orElseThrow(() -> new ResourceNotFoundException("Category not found with id: " + id));
+
+        String trimmedName = requestDto.name().trim();
+        category.setName(trimmedName);
+        category.setDescription(requestDto.description());
+        category.setImageUrl(requestDto.imageUrl());
+
+        try {
+            Category updatedCategory = categoryRepository.save(category);
+            return AdminCategoryResponseDto.fromEntity(updatedCategory);
+        } catch (DataIntegrityViolationException e) {
+            throw new DuplicateResourceException("Category name already exists");
+        }
+    }
+
+    @Transactional
+    public void deleteCategory(Long id) {
+        if (!categoryRepository.existsById(id)) {
+            throw new ResourceNotFoundException("Category not found with id: " + id);
+        }
+
+        if (productRepository.existsByCategoryId(id)) {
+            throw new ResourceConflictException("Cannot delete category as it is still referenced by one or more products");
+        }
+
+        categoryRepository.deleteById(id);
     }
 }
