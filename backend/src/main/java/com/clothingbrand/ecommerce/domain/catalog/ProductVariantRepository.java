@@ -14,7 +14,7 @@ public interface ProductVariantRepository extends JpaRepository<ProductVariant, 
     boolean existsByProductIdAndSizeAndColor(Long productId, String size, String color);
     boolean existsByProductIdAndSizeAndColorAndIdNot(Long productId, String size, String color, Long id);
 
-    @Modifying
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("UPDATE ProductVariant v SET v.stockQuantity = v.stockQuantity + :adjustment WHERE v.id = :variantId AND v.product.id = :productId AND (v.stockQuantity + :adjustment) >= 0")
     int adjustStock(@Param("productId") Long productId, @Param("variantId") Long variantId, @Param("adjustment") Integer adjustment);
 }

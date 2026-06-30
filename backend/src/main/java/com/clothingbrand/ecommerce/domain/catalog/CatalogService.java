@@ -206,4 +206,37 @@ public class CatalogService {
         product.getVariants().remove(variant);
         productVariantRepository.delete(variant);
     }
+
+    @Transactional
+    public AdminProductVariantResponseDto adjustProductVariantStock(Long productId, Long variantId, AdminStockAdjustmentRequestDto requestDto) {
+        if (requestDto == null || requestDto.adjustment() == null || requestDto.adjustment() == 0) {
+            throw new IllegalArgumentException("Adjustment must not be null or zero");
+        }
+
+        if (!productRepository.existsById(productId)) {
+            throw new ResourceNotFoundException("Product not found with id: " + productId);
+        }
+
+        ProductVariant variant = productVariantRepository.findById(variantId)
+            .orElseThrow(() -> new ResourceNotFoundException("Variant not found with id: " + variantId));
+
+        if (!variant.getProduct().getId().equals(productId)) {
+            throw new ResourceNotFoundException("Variant not found for product id: " + productId);
+        }
+
+        int updatedRows = productVariantRepository.adjustStock(productId, variantId, requestDto.adjustment());
+
+        if (updatedRows == 0) {
+            ProductVariant currentVariant = productVariantRepository.findById(variantId).orElse(null);
+            if (currentVariant == null || !currentVariant.getProduct().getId().equals(productId)) {
+                throw new ResourceNotFoundException("Variant not found with id: " + variantId);
+            }
+            throw new ResourceConflictException("Insufficient stock for this adjustment");
+        }
+
+        ProductVariant updatedVariant = productVariantRepository.findById(variantId)
+            .orElseThrow(() -> new ResourceNotFoundException("Variant not found with id: " + variantId));
+
+        return AdminProductVariantResponseDto.fromEntity(updatedVariant);
+    }
 }
