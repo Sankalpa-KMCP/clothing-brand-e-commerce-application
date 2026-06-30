@@ -127,7 +127,7 @@ public class AdminProductVariantIntegrationTest {
     @Test
     void testVariantEndpoints_Security_NoToken_Returns401() throws Exception {
         AdminProductVariantRequestDto request = new AdminProductVariantRequestDto("SKU", "S", "Red", new BigDecimal("10.0"));
-        
+
         mockMvc.perform(post("/api/admin/products/" + testProduct.getId() + "/variants")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
@@ -167,7 +167,7 @@ public class AdminProductVariantIntegrationTest {
     void testCreateVariant_AdminToken_Returns201() throws Exception {
         String sku = "SKU-" + UUID.randomUUID();
         AdminProductVariantRequestDto request = new AdminProductVariantRequestDto(sku, "M", "Blue", new BigDecimal("25.50"));
-        
+
         mockMvc.perform(post("/api/admin/products/" + testProduct.getId() + "/variants")
                 .header("Authorization", "Bearer " + adminToken)
                 .contentType(MediaType.APPLICATION_JSON)
@@ -267,7 +267,7 @@ public class AdminProductVariantIntegrationTest {
         assertEquals(5, variant.getStockQuantity());
 
         AdminProductVariantRequestDto request = new AdminProductVariantRequestDto("SKU-UPD-NEW", "M", "Blue", new BigDecimal("15.00"));
-        
+
         mockMvc.perform(put("/api/admin/products/" + testProduct.getId() + "/variants/" + variant.getId())
                 .header("Authorization", "Bearer " + adminToken)
                 .contentType(MediaType.APPLICATION_JSON)
@@ -289,7 +289,7 @@ public class AdminProductVariantIntegrationTest {
     void testUpdateVariant_MissingProduct_Returns404() throws Exception {
         ProductVariant variant = createSavedVariant(testProduct, "SKU-MISSP", "S", "Red");
         AdminProductVariantRequestDto request = new AdminProductVariantRequestDto("SKU-NEW", "M", "Blue", new BigDecimal("15.00"));
-        
+
         mockMvc.perform(put("/api/admin/products/999999/variants/" + variant.getId())
                 .header("Authorization", "Bearer " + adminToken)
                 .contentType(MediaType.APPLICATION_JSON)
@@ -301,7 +301,7 @@ public class AdminProductVariantIntegrationTest {
     @Test
     void testUpdateVariant_MissingVariant_Returns404() throws Exception {
         AdminProductVariantRequestDto request = new AdminProductVariantRequestDto("SKU-NEW", "M", "Blue", new BigDecimal("15.00"));
-        
+
         mockMvc.perform(put("/api/admin/products/" + testProduct.getId() + "/variants/999999")
                 .header("Authorization", "Bearer " + adminToken)
                 .contentType(MediaType.APPLICATION_JSON)
@@ -314,7 +314,7 @@ public class AdminProductVariantIntegrationTest {
     void testUpdateVariant_WrongProductOwnership_Returns404() throws Exception {
         ProductVariant variant = createSavedVariant(testProduct2, "SKU-WRONG", "S", "Red");
         AdminProductVariantRequestDto request = new AdminProductVariantRequestDto("SKU-NEW", "M", "Blue", new BigDecimal("15.00"));
-        
+
         // Use testProduct.getId() instead of testProduct2
         mockMvc.perform(put("/api/admin/products/" + testProduct.getId() + "/variants/" + variant.getId())
                 .header("Authorization", "Bearer " + adminToken)
@@ -330,7 +330,7 @@ public class AdminProductVariantIntegrationTest {
         ProductVariant variant2 = createSavedVariant(testProduct, "SKU-EXIST2", "M", "Blue");
 
         AdminProductVariantRequestDto request = new AdminProductVariantRequestDto("SKU-EXIST", "L", "Green", new BigDecimal("15.00"));
-        
+
         mockMvc.perform(put("/api/admin/products/" + testProduct.getId() + "/variants/" + variant2.getId())
                 .header("Authorization", "Bearer " + adminToken)
                 .contentType(MediaType.APPLICATION_JSON)
@@ -346,7 +346,7 @@ public class AdminProductVariantIntegrationTest {
 
         String uniqueSku = "SKU-UNIQ-" + UUID.randomUUID();
         AdminProductVariantRequestDto request = new AdminProductVariantRequestDto(uniqueSku, "S", "Red", new BigDecimal("15.00"));
-        
+
         mockMvc.perform(put("/api/admin/products/" + testProduct.getId() + "/variants/" + variant2.getId())
                 .header("Authorization", "Bearer " + adminToken)
                 .contentType(MediaType.APPLICATION_JSON)
@@ -361,7 +361,7 @@ public class AdminProductVariantIntegrationTest {
     @Test
     void testDeleteVariant_ValidAdmin_Returns204() throws Exception {
         ProductVariant variant = createSavedVariant(testProduct, "SKU-DEL", "S", "Red");
-        
+
         mockMvc.perform(delete("/api/admin/products/" + testProduct.getId() + "/variants/" + variant.getId())
                 .header("Authorization", "Bearer " + adminToken))
                 .andExpect(status().isNoContent());
@@ -380,7 +380,7 @@ public class AdminProductVariantIntegrationTest {
     @Test
     void testDeleteVariant_WrongProductOwnership_Returns404() throws Exception {
         ProductVariant variant = createSavedVariant(testProduct2, "SKU-DEL-WRONG", "S", "Red");
-        
+
         mockMvc.perform(delete("/api/admin/products/" + testProduct.getId() + "/variants/" + variant.getId())
                 .header("Authorization", "Bearer " + adminToken))
                 .andExpect(status().isNotFound());
@@ -389,7 +389,7 @@ public class AdminProductVariantIntegrationTest {
     @Test
     void testDeleteVariant_MissingParentProduct_Returns404() throws Exception {
         ProductVariant variant = createSavedVariant(testProduct, "SKU-DEL-MISSING-" + UUID.randomUUID(), "S", "Red");
-        
+
         mockMvc.perform(delete("/api/admin/products/999999/variants/" + variant.getId())
                 .header("Authorization", "Bearer " + adminToken))
                 .andExpect(status().isNotFound())
@@ -407,7 +407,7 @@ public class AdminProductVariantIntegrationTest {
                 .andExpect(jsonPath("$.variants").isEmpty());
 
         ProductVariant variant = createSavedVariant(testProduct, "SKU-HIDE", "S", "Red");
-        
+
         AdminProductVariantRequestDto request = new AdminProductVariantRequestDto("SKU-HIDE-UPD", "M", "Blue", new BigDecimal("25.00"));
         mockMvc.perform(put("/api/admin/products/" + testProduct.getId() + "/variants/" + variant.getId())
                 .header("Authorization", "Bearer " + adminToken)
@@ -421,5 +421,187 @@ public class AdminProductVariantIntegrationTest {
                 .andExpect(jsonPath("$.variants[0].sku").doesNotExist())
                 .andExpect(jsonPath("$.variants[0].stockQuantity").doesNotExist())
                 .andExpect(jsonPath("$.variants[0].size").value("M"));
+    }
+
+    @Test
+    void testStockAdjustment_Security_NoToken_Returns401() throws Exception {
+        AdminStockAdjustmentRequestDto request = new AdminStockAdjustmentRequestDto(5);
+        mockMvc.perform(patch("/api/admin/products/" + testProduct.getId() + "/variants/1/stock")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.status").value(401));
+    }
+
+    @Test
+    void testStockAdjustment_InvalidToken_Returns401() throws Exception {
+        AdminStockAdjustmentRequestDto request = new AdminStockAdjustmentRequestDto(5);
+        mockMvc.perform(patch("/api/admin/products/" + testProduct.getId() + "/variants/1/stock")
+                .header("Authorization", "Bearer invalid-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void testStockAdjustment_CustomerToken_Returns403() throws Exception {
+        AdminStockAdjustmentRequestDto request = new AdminStockAdjustmentRequestDto(5);
+        mockMvc.perform(patch("/api/admin/products/" + testProduct.getId() + "/variants/1/stock")
+                .header("Authorization", "Bearer " + customerToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void testStockAdjustment_PositiveAdjustment_Returns200() throws Exception {
+        ProductVariant variant = createSavedVariant(testProduct, "SKU-ADJ-POS-" + UUID.randomUUID(), "S", "Red");
+        assertEquals(5, variant.getStockQuantity());
+
+        AdminStockAdjustmentRequestDto request = new AdminStockAdjustmentRequestDto(10);
+
+        mockMvc.perform(patch("/api/admin/products/" + testProduct.getId() + "/variants/" + variant.getId() + "/stock")
+                .header("Authorization", "Bearer " + adminToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.stockQuantity").value(15))
+                .andExpect(jsonPath("$.sku").value(variant.getSku()));
+
+        ProductVariant updated = productVariantRepository.findById(variant.getId()).orElseThrow();
+        assertEquals(15, updated.getStockQuantity());
+        assertEquals(variant.getSku(), updated.getSku());
+    }
+
+    @Test
+    void testStockAdjustment_NegativeAdjustment_NonNegative_Returns200() throws Exception {
+        ProductVariant variant = createSavedVariant(testProduct, "SKU-ADJ-NEG-" + UUID.randomUUID(), "M", "Blue");
+        assertEquals(5, variant.getStockQuantity());
+
+        AdminStockAdjustmentRequestDto request = new AdminStockAdjustmentRequestDto(-3);
+
+        mockMvc.perform(patch("/api/admin/products/" + testProduct.getId() + "/variants/" + variant.getId() + "/stock")
+                .header("Authorization", "Bearer " + adminToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.stockQuantity").value(2));
+
+        ProductVariant updated = productVariantRepository.findById(variant.getId()).orElseThrow();
+        assertEquals(2, updated.getStockQuantity());
+        assertEquals(variant.getSku(), updated.getSku());
+    }
+
+    @Test
+    void testStockAdjustment_ZeroAdjustment_Returns400() throws Exception {
+        ProductVariant variant = createSavedVariant(testProduct, "SKU-ADJ-ZERO-" + UUID.randomUUID(), "L", "Green");
+
+        AdminStockAdjustmentRequestDto request = new AdminStockAdjustmentRequestDto(0);
+
+        mockMvc.perform(patch("/api/admin/products/" + testProduct.getId() + "/variants/" + variant.getId() + "/stock")
+                .header("Authorization", "Bearer " + adminToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400));
+
+        ProductVariant unchanged = productVariantRepository.findById(variant.getId()).orElseThrow();
+        assertEquals(5, unchanged.getStockQuantity());
+    }
+
+    @Test
+    void testStockAdjustment_MissingOrNullAdjustment_Returns400() throws Exception {
+        ProductVariant variant = createSavedVariant(testProduct, "SKU-ADJ-NULL-" + UUID.randomUUID(), "XL", "Black");
+
+        mockMvc.perform(patch("/api/admin/products/" + testProduct.getId() + "/variants/" + variant.getId() + "/stock")
+                .header("Authorization", "Bearer " + adminToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400));
+
+        ProductVariant unchanged = productVariantRepository.findById(variant.getId()).orElseThrow();
+        assertEquals(5, unchanged.getStockQuantity());
+    }
+
+    @Test
+    void testStockAdjustment_MissingProduct_Returns404() throws Exception {
+        ProductVariant variant = createSavedVariant(testProduct, "SKU-ADJ-MISSP-" + UUID.randomUUID(), "S", "Red");
+        AdminStockAdjustmentRequestDto request = new AdminStockAdjustmentRequestDto(5);
+
+        mockMvc.perform(patch("/api/admin/products/999999/variants/" + variant.getId() + "/stock")
+                .header("Authorization", "Bearer " + adminToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status").value(404));
+
+        ProductVariant unchanged = productVariantRepository.findById(variant.getId()).orElseThrow();
+        assertEquals(5, unchanged.getStockQuantity());
+    }
+
+    @Test
+    void testStockAdjustment_MissingVariant_Returns404() throws Exception {
+        AdminStockAdjustmentRequestDto request = new AdminStockAdjustmentRequestDto(5);
+
+        mockMvc.perform(patch("/api/admin/products/" + testProduct.getId() + "/variants/999999/stock")
+                .header("Authorization", "Bearer " + adminToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status").value(404));
+    }
+
+    @Test
+    void testStockAdjustment_WrongParentPath_Returns404() throws Exception {
+        ProductVariant variant = createSavedVariant(testProduct2, "SKU-ADJ-WRONG-" + UUID.randomUUID(), "S", "Red");
+        AdminStockAdjustmentRequestDto request = new AdminStockAdjustmentRequestDto(5);
+
+        mockMvc.perform(patch("/api/admin/products/" + testProduct.getId() + "/variants/" + variant.getId() + "/stock")
+                .header("Authorization", "Bearer " + adminToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status").value(404));
+
+        ProductVariant unchanged = productVariantRepository.findById(variant.getId()).orElseThrow();
+        assertEquals(5, unchanged.getStockQuantity());
+    }
+
+    @Test
+    void testStockAdjustment_NegativeAdjustment_InsufficientStock_Returns409() throws Exception {
+        ProductVariant variant = createSavedVariant(testProduct, "SKU-ADJ-INSUFF-" + UUID.randomUUID(), "M", "Blue");
+        assertEquals(5, variant.getStockQuantity());
+
+        AdminStockAdjustmentRequestDto request = new AdminStockAdjustmentRequestDto(-10);
+
+        mockMvc.perform(patch("/api/admin/products/" + testProduct.getId() + "/variants/" + variant.getId() + "/stock")
+                .header("Authorization", "Bearer " + adminToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.status").value(409));
+
+        ProductVariant unchanged = productVariantRepository.findById(variant.getId()).orElseThrow();
+        assertEquals(5, unchanged.getStockQuantity());
+        assertEquals(variant.getSku(), unchanged.getSku());
+    }
+
+    @Test
+    void testStockAdjustment_PublicCatalogRegression_HidesStockAndSku() throws Exception {
+        ProductVariant variant = createSavedVariant(testProduct, "SKU-ADJ-PUB-HIDE-" + UUID.randomUUID(), "S", "Red");
+        AdminStockAdjustmentRequestDto request = new AdminStockAdjustmentRequestDto(15);
+
+        mockMvc.perform(patch("/api/admin/products/" + testProduct.getId() + "/variants/" + variant.getId() + "/stock")
+                .header("Authorization", "Bearer " + adminToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(get("/api/products/" + testProduct.getId()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.variants[0].sku").doesNotExist())
+                .andExpect(jsonPath("$.variants[0].stockQuantity").doesNotExist())
+                .andExpect(jsonPath("$.variants[0].size").exists());
     }
 }

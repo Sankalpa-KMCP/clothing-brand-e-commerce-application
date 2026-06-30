@@ -40,4 +40,12 @@ public class AdminProductController {
         catalogService.deleteProductVariant(productId, variantId);
         return ResponseEntity.noContent().build();
     }
+
+    @PatchMapping("/{productId}/variants/{variantId}/stock")
+    public ResponseEntity<AdminProductVariantResponseDto> adjustProductVariantStock(
+            @PathVariable Long productId,
+            @PathVariable Long variantId,
+            @Valid @RequestBody AdminStockAdjustmentRequestDto requestDto) {
+        return ResponseEntity.ok(catalogService.adjustProductVariantStock(productId, variantId, requestDto));
+    }
 }
