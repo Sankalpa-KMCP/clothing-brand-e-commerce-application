@@ -33,7 +33,7 @@ public class CatalogService {
         int safePage = Math.max(0, page);
         int safeSize = size > 0 && size <= 100 ? size : 20;
         
-        Pageable pageable = PageRequest.of(safePage, safeSize, Sort.by(Sort.Direction.DESC, "createdAt"));
+        Pageable pageable = PageRequest.of(safePage, safeSize, Sort.by(Sort.Direction.DESC, "createdAt", "id"));
         String safeQuery = (query == null || query.trim().isEmpty()) ? "" : "%" + query.trim().toLowerCase() + "%";
         
         return productRepository.findActiveProducts(categoryId, safeQuery, pageable)
