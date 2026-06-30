@@ -24,4 +24,20 @@ public class AdminProductController {
     public ResponseEntity<AdminProductResponseDto> updateProduct(@PathVariable Long id, @Valid @RequestBody AdminProductRequestDto requestDto) {
         return ResponseEntity.ok(catalogService.updateProduct(id, requestDto));
     }
+
+    @PostMapping("/{productId}/variants")
+    public ResponseEntity<AdminProductVariantResponseDto> createProductVariant(@PathVariable Long productId, @Valid @RequestBody AdminProductVariantRequestDto requestDto) {
+        return new ResponseEntity<>(catalogService.createProductVariant(productId, requestDto), HttpStatus.CREATED);
+    }
+
+    @PutMapping("/{productId}/variants/{variantId}")
+    public ResponseEntity<AdminProductVariantResponseDto> updateProductVariant(@PathVariable Long productId, @PathVariable Long variantId, @Valid @RequestBody AdminProductVariantRequestDto requestDto) {
+        return ResponseEntity.ok(catalogService.updateProductVariant(productId, variantId, requestDto));
+    }
+
+    @DeleteMapping("/{productId}/variants/{variantId}")
+    public ResponseEntity<Void> deleteProductVariant(@PathVariable Long productId, @PathVariable Long variantId) {
+        catalogService.deleteProductVariant(productId, variantId);
+        return ResponseEntity.noContent().build();
+    }
 }

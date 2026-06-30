@@ -19,10 +19,12 @@ public class CatalogService {
 
     private final CategoryRepository categoryRepository;
     private final ProductRepository productRepository;
+    private final ProductVariantRepository productVariantRepository;
 
-    public CatalogService(CategoryRepository categoryRepository, ProductRepository productRepository) {
+    public CatalogService(CategoryRepository categoryRepository, ProductRepository productRepository, ProductVariantRepository productVariantRepository) {
         this.categoryRepository = categoryRepository;
         this.productRepository = productRepository;
+        this.productVariantRepository = productVariantRepository;
     }
 
     public List<CategoryDto> getAllCategories() {
@@ -129,5 +131,79 @@ public class CatalogService {
 
         Product updatedProduct = productRepository.save(product);
         return AdminProductResponseDto.fromEntity(updatedProduct);
+    }
+
+    @Transactional
+    public AdminProductVariantResponseDto createProductVariant(Long productId, AdminProductVariantRequestDto requestDto) {
+        Product product = productRepository.findById(productId)
+            .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + productId));
+        String sku = requestDto.sku().trim();
+        String size = requestDto.size().trim();
+        String color = requestDto.color().trim();
+
+        if (productVariantRepository.existsBySku(sku)) {
+            throw new ResourceConflictException("Variant with SKU '" + sku + "' already exists.");
+        }
+        if (productVariantRepository.existsByProductIdAndSizeAndColor(productId, size, color)) {
+            throw new ResourceConflictException("Variant with size '" + size + "' and color '" + color + "' already exists for this product.");
+        }
+
+        ProductVariant variant = new ProductVariant();
+        variant.setProduct(product);
+        variant.setSku(sku);
+        variant.setSize(size);
+        variant.setColor(color);
+        variant.setPrice(requestDto.price());
+
+        ProductVariant savedVariant = productVariantRepository.save(variant);
+        return AdminProductVariantResponseDto.fromEntity(savedVariant);
+    }
+
+    @Transactional
+    public AdminProductVariantResponseDto updateProductVariant(Long productId, Long variantId, AdminProductVariantRequestDto requestDto) {
+        if (!productRepository.existsById(productId)) {
+            throw new ResourceNotFoundException("Product not found with id: " + productId);
+        }
+        ProductVariant variant = productVariantRepository.findById(variantId)
+            .orElseThrow(() -> new ResourceNotFoundException("Variant not found with id: " + variantId));
+
+        if (!variant.getProduct().getId().equals(productId)) {
+            throw new ResourceNotFoundException("Variant not found for product id: " + productId);
+        }
+
+        String sku = requestDto.sku().trim();
+        String size = requestDto.size().trim();
+        String color = requestDto.color().trim();
+
+        if (productVariantRepository.existsBySkuAndIdNot(sku, variantId)) {
+            throw new ResourceConflictException("Variant with SKU '" + sku + "' already exists.");
+        }
+        if (productVariantRepository.existsByProductIdAndSizeAndColorAndIdNot(productId, size, color, variantId)) {
+            throw new ResourceConflictException("Variant with size '" + size + "' and color '" + color + "' already exists for this product.");
+        }
+
+        variant.setSku(sku);
+        variant.setSize(size);
+        variant.setColor(color);
+        variant.setPrice(requestDto.price());
+
+        ProductVariant updatedVariant = productVariantRepository.save(variant);
+        return AdminProductVariantResponseDto.fromEntity(updatedVariant);
+    }
+
+    @Transactional
+    public void deleteProductVariant(Long productId, Long variantId) {
+        Product product = productRepository.findById(productId)
+            .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + productId));
+
+        ProductVariant variant = productVariantRepository.findById(variantId)
+            .orElseThrow(() -> new ResourceNotFoundException("Variant not found with id: " + variantId));
+
+        if (!variant.getProduct().getId().equals(productId)) {
+            throw new ResourceNotFoundException("Variant not found for product id: " + productId);
+        }
+
+        product.getVariants().remove(variant);
+        productVariantRepository.delete(variant);
     }
 }
