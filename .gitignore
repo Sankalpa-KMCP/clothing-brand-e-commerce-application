@@ -1,0 +1,17 @@
+# Ignore environment variables file
+.env
+.env.*
+!.env.example
+
+# Local IDE
+.idea/
+*.iml
+.vscode/
+
+# Build outputs
+backend/target/
+backend/out/
+
+# OS generated files
+.DS_Store
+Thumbs.db
