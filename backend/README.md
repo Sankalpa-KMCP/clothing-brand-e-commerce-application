@@ -51,3 +51,13 @@ This is the Spring Boot backend foundation for the clothing brand e-commerce por
 
 ## Database Migrations
 We use Flyway for database migrations. Future schema changes will be placed in `src/main/resources/db/migration/`. Hibernate `ddl-auto` is set to `validate` to prevent unintended schema modifications.
+
+## Admin Bootstrap
+For local development and testing, you can explicitly opt-in to bootstrap an administrator account on startup.
+Set the following environment variables in your `.env` file (never commit `.env`!):
+```env
+ADMIN_BOOTSTRAP_ENABLED=true
+ADMIN_EMAIL=admin@example.com
+ADMIN_PASSWORD=your_secure_password
+```
+This is disabled by default. If a customer already registered with this email, the bootstrap will safely back off and not elevate their privileges.
