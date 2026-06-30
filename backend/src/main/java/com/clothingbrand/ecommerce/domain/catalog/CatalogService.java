@@ -96,4 +96,38 @@ public class CatalogService {
 
         categoryRepository.deleteById(id);
     }
+
+    @Transactional
+    public AdminProductResponseDto createProduct(AdminProductRequestDto requestDto) {
+        Category category = categoryRepository.findById(requestDto.categoryId())
+            .orElseThrow(() -> new ResourceNotFoundException("Category not found with id: " + requestDto.categoryId()));
+
+        Product product = new Product();
+        product.setCategory(category);
+        product.setName(requestDto.name().trim());
+        product.setDescription(requestDto.description());
+        product.setImageUrl(requestDto.imageUrl());
+        product.setActive(requestDto.active());
+
+        Product savedProduct = productRepository.save(product);
+        return AdminProductResponseDto.fromEntity(savedProduct);
+    }
+
+    @Transactional
+    public AdminProductResponseDto updateProduct(Long id, AdminProductRequestDto requestDto) {
+        Product product = productRepository.findById(id)
+            .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + id));
+
+        Category category = categoryRepository.findById(requestDto.categoryId())
+            .orElseThrow(() -> new ResourceNotFoundException("Category not found with id: " + requestDto.categoryId()));
+
+        product.setCategory(category);
+        product.setName(requestDto.name().trim());
+        product.setDescription(requestDto.description());
+        product.setImageUrl(requestDto.imageUrl());
+        product.setActive(requestDto.active());
+
+        Product updatedProduct = productRepository.save(product);
+        return AdminProductResponseDto.fromEntity(updatedProduct);
+    }
 }
