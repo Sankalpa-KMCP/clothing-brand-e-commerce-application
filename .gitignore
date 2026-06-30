@@ -12,6 +12,9 @@
 backend/target/
 backend/out/
 
+# AI Context
+ai/
+
 # OS generated files
 .DS_Store
 Thumbs.db
