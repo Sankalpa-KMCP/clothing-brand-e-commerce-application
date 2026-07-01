@@ -9,6 +9,8 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -27,9 +29,11 @@ public class RefreshTokenIntegrationTest {
     private RoleRepository roleRepository;
 
     private User fixtureUser;
+    private final List<UUID> createdFamilyIds = new ArrayList<>();
 
     @BeforeEach
     void setUp() {
+        createdFamilyIds.clear();
         Role customerRole = roleRepository.findByName(RoleName.ROLE_CUSTOMER)
                 .orElseThrow(() -> new RuntimeException("Role not found"));
 
@@ -51,8 +55,9 @@ public class RefreshTokenIntegrationTest {
             userRepository.flush(); // To ensure constraints are checked immediately
 
             // Independent post-cleanup absence verification ensuring FK cascade worked
-            assertTrue(refreshTokenRepository.findAll().stream()
-                    .noneMatch(rt -> rt.getUser().getId().equals(fixtureUser.getId())));
+            for (UUID familyId : createdFamilyIds) {
+                assertTrue(refreshTokenRepository.findByFamilyId(familyId).isEmpty());
+            }
         }
     }
 
@@ -60,6 +65,7 @@ public class RefreshTokenIntegrationTest {
     void testSaveAndRetrieveRefreshToken() {
         String tokenHash = "dummyhash-" + UUID.randomUUID();
         UUID familyId = UUID.randomUUID();
+        createdFamilyIds.add(familyId);
 
         RefreshToken rt = new RefreshToken();
         rt.setTokenHash(tokenHash);
@@ -81,6 +87,7 @@ public class RefreshTokenIntegrationTest {
     void testTokenHashUniquenessEnforced() {
         String tokenHash = "duplicate-hash-" + UUID.randomUUID();
         UUID familyId = UUID.randomUUID();
+        createdFamilyIds.add(familyId);
 
         RefreshToken rt1 = new RefreshToken();
         rt1.setTokenHash(tokenHash);
@@ -106,6 +113,7 @@ public class RefreshTokenIntegrationTest {
     @Transactional
     void testFamilyLevelRevocation() {
         UUID familyId = UUID.randomUUID();
+        createdFamilyIds.add(familyId);
 
         RefreshToken rt1 = new RefreshToken();
         rt1.setTokenHash("hash1-" + UUID.randomUUID());
