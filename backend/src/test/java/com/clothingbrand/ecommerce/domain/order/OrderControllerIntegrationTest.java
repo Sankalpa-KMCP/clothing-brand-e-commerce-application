@@ -23,6 +23,9 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import com.clothingbrand.ecommerce.domain.address.CustomerAddress;
+import com.clothingbrand.ecommerce.domain.address.CustomerAddressRepository;
+import com.clothingbrand.ecommerce.domain.order.OrderDeliveryAddressRepository;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -78,6 +81,12 @@ class OrderControllerIntegrationTest {
     private CustomerOrderRepository customerOrderRepository;
 
     @Autowired
+    private CustomerAddressRepository customerAddressRepository;
+
+    @Autowired
+    private OrderDeliveryAddressRepository orderDeliveryAddressRepository;
+
+    @Autowired
     private PasswordEncoder passwordEncoder;
 
     @Autowired
@@ -100,6 +109,8 @@ class OrderControllerIntegrationTest {
     private Product inactiveProduct;
 
     private final List<Long> createdOrderIds = new ArrayList<>();
+    private final List<Long> createdDeliveryAddressIds = new ArrayList<>();
+    private final List<Long> createdAddressIds = new ArrayList<>();
     private final List<Long> createdCartIds = new ArrayList<>();
     private final List<Long> createdCartItemIds = new ArrayList<>();
     private final List<Long> createdVariantIds = new ArrayList<>();
@@ -110,6 +121,8 @@ class OrderControllerIntegrationTest {
     @BeforeEach
     void setup() {
         createdOrderIds.clear();
+        createdDeliveryAddressIds.clear();
+        createdAddressIds.clear();
         createdCartIds.clear();
         createdCartItemIds.clear();
         createdVariantIds.clear();
@@ -151,8 +164,15 @@ class OrderControllerIntegrationTest {
                 }
             }
 
+                        for (Long deliveryId : createdDeliveryAddressIds) {
+                if (orderDeliveryAddressRepository.existsById(deliveryId)) {
+                    orderDeliveryAddressRepository.deleteById(deliveryId);
+                }
+            }
             for (Long orderId : createdOrderIds) {
                 customerOrderRepository.findById(orderId).ifPresent(order -> {
+                    orderDeliveryAddressRepository.findByOrderId(orderId)
+                        .ifPresent(delivery -> orderDeliveryAddressRepository.delete(delivery));
                     order.getItems().clear();
                     customerOrderRepository.saveAndFlush(order);
                     customerOrderRepository.deleteById(orderId);
@@ -193,6 +213,11 @@ class OrderControllerIntegrationTest {
                 }
             }
 
+                        for (Long addressId : createdAddressIds) {
+                if (customerAddressRepository.existsById(addressId)) {
+                    customerAddressRepository.deleteById(addressId);
+                }
+            }
             for (Long userId : createdUserIds) {
                 if (userRepository.existsById(userId)) {
                     userRepository.deleteById(userId);
@@ -202,6 +227,12 @@ class OrderControllerIntegrationTest {
 
         transactionTemplate.executeWithoutResult(status -> {
             for (Long orderId : createdOrderIds) {
+                            for (Long deliveryId : createdDeliveryAddressIds) {
+                assertTrue(orderDeliveryAddressRepository.findById(deliveryId).isEmpty(), "Delivery leak: " + deliveryId);
+            }
+            for (Long addressId : createdAddressIds) {
+                assertTrue(customerAddressRepository.findById(addressId).isEmpty(), "Address leak: " + addressId);
+            }
                 assertTrue(customerOrderRepository.findById(orderId).isEmpty(), "Order leak: " + orderId);
             }
             for (Long cartItemId : createdCartItemIds) {
@@ -269,6 +300,10 @@ class OrderControllerIntegrationTest {
 
         Long orderId = objectMapper.readTree(result.getResponse().getContentAsString()).get("id").asLong();
         createdOrderIds.add(orderId);
+        transactionTemplate.executeWithoutResult(status -> {
+            orderDeliveryAddressRepository.findByOrderId(orderId)
+                    .ifPresent(delivery -> createdDeliveryAddressIds.add(delivery.getId()));
+        });
 
         assertResponseItemHasOnlyCustomerFields(result);
         assertEquals(6, currentStock(variant));
@@ -449,6 +484,17 @@ class OrderControllerIntegrationTest {
         user.setActive(true);
         user = userRepository.save(user);
         createdUserIds.add(user.getId());
+                
+        CustomerAddress address = new CustomerAddress();
+        address.setUser(user);
+        address.setRecipientName(user.getFirstName());
+        address.setPhoneNumber("12345");
+        address.setAddressLine1("Line1");
+        address.setCity("City");
+        address.setCountry("USA");
+        address.setIsDefault(true);
+        address = customerAddressRepository.save(address);
+        createdAddressIds.add(address.getId());
         return user;
     }
 

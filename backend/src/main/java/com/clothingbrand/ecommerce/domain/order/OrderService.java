@@ -8,6 +8,8 @@ import com.clothingbrand.ecommerce.domain.catalog.ProductVariant;
 import com.clothingbrand.ecommerce.domain.catalog.ProductVariantRepository;
 import com.clothingbrand.ecommerce.domain.user.User;
 import com.clothingbrand.ecommerce.domain.user.UserRepository;
+import com.clothingbrand.ecommerce.domain.address.CustomerAddress;
+import com.clothingbrand.ecommerce.domain.address.CustomerAddressRepository;
 import com.clothingbrand.ecommerce.exception.ResourceConflictException;
 import com.clothingbrand.ecommerce.exception.ResourceNotFoundException;
 import org.springframework.data.domain.Page;
@@ -44,26 +46,41 @@ public class OrderService {
     private final CustomerOrderRepository customerOrderRepository;
     private final OrderStatusHistoryRepository orderStatusHistoryRepository;
     private final UserRepository userRepository;
+    private final CustomerAddressRepository customerAddressRepository;
+    private final OrderDeliveryAddressRepository orderDeliveryAddressRepository;
 
     public OrderService(CartRepository cartRepository,
                         ProductVariantRepository productVariantRepository,
                         CustomerOrderRepository customerOrderRepository,
                         OrderStatusHistoryRepository orderStatusHistoryRepository,
-                        UserRepository userRepository) {
+                        UserRepository userRepository,
+                        CustomerAddressRepository customerAddressRepository,
+                        OrderDeliveryAddressRepository orderDeliveryAddressRepository) {
         this.cartRepository = cartRepository;
         this.productVariantRepository = productVariantRepository;
         this.customerOrderRepository = customerOrderRepository;
         this.orderStatusHistoryRepository = orderStatusHistoryRepository;
         this.userRepository = userRepository;
+        this.customerAddressRepository = customerAddressRepository;
+        this.orderDeliveryAddressRepository = orderDeliveryAddressRepository;
     }
 
     record CheckoutItemInput(Long cartId, Long userId, Long productId, Long variantId, Integer requestedQuantity) {}
     record RestockLine(Long productId, Long variantId, Integer quantity) {}
 
     @Transactional
-    public OrderResponseDto checkout(Long authenticatedUserId) {
+    public OrderResponseDto checkout(Long authenticatedUserId, Long addressId) {
         if (authenticatedUserId == null) {
             throw new IllegalArgumentException("Authenticated user ID cannot be null");
+        }
+
+        CustomerAddress address;
+        if (addressId == null) {
+            address = customerAddressRepository.findByUserIdAndIsDefaultTrue(authenticatedUserId)
+                    .orElseThrow(() -> new ResourceConflictException("Delivery address is required for checkout"));
+        } else {
+            address = customerAddressRepository.findByIdAndUserId(addressId, authenticatedUserId)
+                    .orElseThrow(() -> new ResourceConflictException("Delivery address is required for checkout"));
         }
 
         Cart cart = cartRepository.findByUserIdForUpdate(authenticatedUserId)
@@ -152,6 +169,19 @@ public class OrderService {
         }
 
         order = customerOrderRepository.save(order);
+        OrderDeliveryAddress deliveryAddress = new OrderDeliveryAddress(
+                order,
+                address.getRecipientName(),
+                address.getPhoneNumber(),
+                address.getAddressLine1(),
+                address.getAddressLine2(),
+                address.getCity(),
+                address.getRegion(),
+                address.getPostalCode(),
+                address.getCountry()
+        );
+        orderDeliveryAddressRepository.save(deliveryAddress);
+
         createStatusHistory(order, null, OrderStatus.PLACED, OrderActorType.CUSTOMER, authenticatedUserId);
 
         // Reload cart to clear items

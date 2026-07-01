@@ -23,6 +23,9 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import com.clothingbrand.ecommerce.domain.address.CustomerAddress;
+import com.clothingbrand.ecommerce.domain.address.CustomerAddressRepository;
+import com.clothingbrand.ecommerce.domain.order.OrderDeliveryAddressRepository;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
@@ -76,6 +79,12 @@ class OrderHistoryControllerIntegrationTest {
     private CustomerOrderRepository customerOrderRepository;
 
     @Autowired
+    private CustomerAddressRepository customerAddressRepository;
+
+    @Autowired
+    private OrderDeliveryAddressRepository orderDeliveryAddressRepository;
+
+    @Autowired
     private OrderItemRepository orderItemRepository;
 
     @Autowired
@@ -103,6 +112,8 @@ class OrderHistoryControllerIntegrationTest {
     private Product product;
 
     private final List<Long> createdOrderIds = new ArrayList<>();
+    private final List<Long> createdDeliveryAddressIds = new ArrayList<>();
+    private final List<Long> createdAddressIds = new ArrayList<>();
     private final List<Long> createdOrderItemIds = new ArrayList<>();
     private final List<Long> createdHistoryIds = new ArrayList<>();
     private final List<Long> createdCartIds = new ArrayList<>();
@@ -115,6 +126,8 @@ class OrderHistoryControllerIntegrationTest {
     @BeforeEach
     void setup() {
         createdOrderIds.clear();
+        createdDeliveryAddressIds.clear();
+        createdAddressIds.clear();
         createdOrderItemIds.clear();
         createdHistoryIds.clear();
         createdCartIds.clear();
@@ -156,6 +169,11 @@ class OrderHistoryControllerIntegrationTest {
                 }
             }
 
+                        for (Long deliveryId : createdDeliveryAddressIds) {
+                if (orderDeliveryAddressRepository.existsById(deliveryId)) {
+                    orderDeliveryAddressRepository.deleteById(deliveryId);
+                }
+            }
             for (Long orderId : createdOrderIds) {
                 customerOrderRepository.findById(orderId).ifPresent(order -> {
                     orderStatusHistoryRepository.findByOrderIdOrderByCreatedAtAscIdAsc(orderId).forEach(history -> {
@@ -179,6 +197,8 @@ class OrderHistoryControllerIntegrationTest {
 
             for (Long orderId : createdOrderIds) {
                 customerOrderRepository.findById(orderId).ifPresent(order -> {
+                    orderDeliveryAddressRepository.findByOrderId(orderId)
+                        .ifPresent(delivery -> orderDeliveryAddressRepository.delete(delivery));
                     order.getItems().clear();
                     customerOrderRepository.saveAndFlush(order);
                     customerOrderRepository.deleteById(orderId);
@@ -225,6 +245,11 @@ class OrderHistoryControllerIntegrationTest {
                 }
             }
 
+                        for (Long addressId : createdAddressIds) {
+                if (customerAddressRepository.existsById(addressId)) {
+                    customerAddressRepository.deleteById(addressId);
+                }
+            }
             for (Long userId : createdUserIds) {
                 if (userRepository.existsById(userId)) {
                     userRepository.deleteById(userId);
@@ -237,6 +262,12 @@ class OrderHistoryControllerIntegrationTest {
                 assertTrue(orderStatusHistoryRepository.findById(historyId).isEmpty(), "OrderStatusHistory leak: " + historyId);
             }
             for (Long orderId : createdOrderIds) {
+                            for (Long deliveryId : createdDeliveryAddressIds) {
+                assertTrue(orderDeliveryAddressRepository.findById(deliveryId).isEmpty(), "Delivery leak: " + deliveryId);
+            }
+            for (Long addressId : createdAddressIds) {
+                assertTrue(customerAddressRepository.findById(addressId).isEmpty(), "Address leak: " + addressId);
+            }
                 assertTrue(customerOrderRepository.findById(orderId).isEmpty(), "Order leak: " + orderId);
             }
             for (Long orderItemId : createdOrderItemIds) {
@@ -551,6 +582,17 @@ class OrderHistoryControllerIntegrationTest {
         user.setActive(true);
         user = userRepository.save(user);
         createdUserIds.add(user.getId());
+                
+        CustomerAddress address = new CustomerAddress();
+        address.setUser(user);
+        address.setRecipientName(user.getFirstName());
+        address.setPhoneNumber("12345");
+        address.setAddressLine1("Line1");
+        address.setCity("City");
+        address.setCountry("USA");
+        address.setIsDefault(true);
+        address = customerAddressRepository.save(address);
+        createdAddressIds.add(address.getId());
         return user;
     }
 

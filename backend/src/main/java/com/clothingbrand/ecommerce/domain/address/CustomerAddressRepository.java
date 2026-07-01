@@ -20,4 +20,6 @@ public interface CustomerAddressRepository extends JpaRepository<CustomerAddress
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("UPDATE CustomerAddress c SET c.isDefault = false WHERE c.user.id = :userId AND c.isDefault = true")
     void clearDefaultAddressesForUser(@Param("userId") Long userId);
+
+    Optional<CustomerAddress> findByUserIdAndIsDefaultTrue(Long userId);
 }

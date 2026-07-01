@@ -20,6 +20,9 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import com.clothingbrand.ecommerce.domain.address.CustomerAddress;
+import com.clothingbrand.ecommerce.domain.address.CustomerAddressRepository;
+import com.clothingbrand.ecommerce.domain.order.OrderDeliveryAddressRepository;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import java.math.BigDecimal;
@@ -60,6 +63,12 @@ public class OrderServiceIntegrationTest {
     private CustomerOrderRepository customerOrderRepository;
 
     @Autowired
+    private CustomerAddressRepository customerAddressRepository;
+
+    @Autowired
+    private OrderDeliveryAddressRepository orderDeliveryAddressRepository;
+
+    @Autowired
     private org.springframework.transaction.support.TransactionTemplate transactionTemplate;
 
     private User customer;
@@ -68,6 +77,8 @@ public class OrderServiceIntegrationTest {
     private Product testProduct;
 
     private final List<Long> createdOrderIds = new ArrayList<>();
+    private final List<Long> createdDeliveryAddressIds = new ArrayList<>();
+    private final List<Long> createdAddressIds = new ArrayList<>();
     private final List<Long> createdCartIds = new ArrayList<>();
     private final List<Long> createdCartItemIds = new ArrayList<>();
     private final List<Long> createdVariantIds = new ArrayList<>();
@@ -78,6 +89,8 @@ public class OrderServiceIntegrationTest {
     @BeforeEach
     void setup() {
         createdOrderIds.clear();
+        createdDeliveryAddressIds.clear();
+        createdAddressIds.clear();
         createdCartIds.clear();
         createdCartItemIds.clear();
         createdVariantIds.clear();
@@ -96,6 +109,18 @@ public class OrderServiceIntegrationTest {
         customer.setActive(true);
         customer = userRepository.save(customer);
         createdUserIds.add(customer.getId());
+
+        CustomerAddress address1 = new CustomerAddress();
+        address1.setUser(customer);
+        address1.setRecipientName("Customer One");
+        address1.setPhoneNumber("1234567890");
+        address1.setAddressLine1("123 Main St");
+        address1.setCity("Metropolis");
+        address1.setCountry("USA");
+        address1.setIsDefault(true);
+        address1 = customerAddressRepository.save(address1);
+        createdAddressIds.add(address1.getId());
+
 
         customer2 = new User();
         customer2.setEmail("cust2-" + UUID.randomUUID() + "@test.com");
@@ -123,8 +148,15 @@ public class OrderServiceIntegrationTest {
     @AfterEach
     void cleanup() {
         transactionTemplate.executeWithoutResult(status -> {
+                        for (Long deliveryId : createdDeliveryAddressIds) {
+                if (orderDeliveryAddressRepository.existsById(deliveryId)) {
+                    orderDeliveryAddressRepository.deleteById(deliveryId);
+                }
+            }
             for (Long orderId : createdOrderIds) {
                 customerOrderRepository.findById(orderId).ifPresent(order -> {
+                    orderDeliveryAddressRepository.findByOrderId(orderId)
+                        .ifPresent(delivery -> orderDeliveryAddressRepository.delete(delivery));
                     order.getItems().clear();
                     customerOrderRepository.saveAndFlush(order);
                     customerOrderRepository.deleteById(orderId);
@@ -165,6 +197,11 @@ public class OrderServiceIntegrationTest {
                 }
             }
 
+                        for (Long addressId : createdAddressIds) {
+                if (customerAddressRepository.existsById(addressId)) {
+                    customerAddressRepository.deleteById(addressId);
+                }
+            }
             for (Long userId : createdUserIds) {
                 if (userRepository.existsById(userId)) {
                     userRepository.deleteById(userId);
@@ -174,6 +211,12 @@ public class OrderServiceIntegrationTest {
 
         transactionTemplate.executeWithoutResult(status -> {
             for (Long orderId : createdOrderIds) {
+                            for (Long deliveryId : createdDeliveryAddressIds) {
+                assertTrue(orderDeliveryAddressRepository.findById(deliveryId).isEmpty(), "Delivery leak: " + deliveryId);
+            }
+            for (Long addressId : createdAddressIds) {
+                assertTrue(customerAddressRepository.findById(addressId).isEmpty(), "Address leak: " + addressId);
+            }
                 assertTrue(customerOrderRepository.findById(orderId).isEmpty(), "Order leak: " + orderId);
             }
             for (Long cartItemId : createdCartItemIds) {
@@ -238,7 +281,7 @@ public class OrderServiceIntegrationTest {
     @Test
     void test1_NoPersistedCart_ThrowsConflict() {
         ResourceConflictException ex = assertThrows(ResourceConflictException.class, () -> {
-            orderService.checkout(customer.getId());
+            orderService.checkout(customer.getId(), null);
         });
         assertEquals("Cart is empty", ex.getMessage());
     }
@@ -251,7 +294,7 @@ public class OrderServiceIntegrationTest {
         createdCartIds.add(newCart.getId());
 
         ResourceConflictException ex = assertThrows(ResourceConflictException.class, () -> {
-            orderService.checkout(customer.getId());
+            orderService.checkout(customer.getId(), null);
         });
         assertEquals("Cart is empty", ex.getMessage());
     }
@@ -261,8 +304,12 @@ public class OrderServiceIntegrationTest {
         ProductVariant variant = createSavedVariant(testProduct, "SKU-S1-" + UUID.randomUUID(), "S", "Red", 10, "15.00");
         addCartItem(customer, variant, 2);
 
-        OrderResponseDto response = orderService.checkout(customer.getId());
+        OrderResponseDto response = orderService.checkout(customer.getId(), null);
         createdOrderIds.add(response.id());
+        transactionTemplate.executeWithoutResult(status -> {
+            orderDeliveryAddressRepository.findByOrderId(response.id())
+                    .ifPresent(delivery -> createdDeliveryAddressIds.add(delivery.getId()));
+        });
 
         assertNotNull(response.id());
         assertEquals(OrderStatus.PLACED.name(), response.status());
@@ -299,8 +346,12 @@ public class OrderServiceIntegrationTest {
         addCartItem(customer, var1, 1);
         addCartItem(customer, var2, 2);
 
-        OrderResponseDto response = orderService.checkout(customer.getId());
+        OrderResponseDto response = orderService.checkout(customer.getId(), null);
         createdOrderIds.add(response.id());
+        transactionTemplate.executeWithoutResult(status -> {
+            orderDeliveryAddressRepository.findByOrderId(response.id())
+                    .ifPresent(delivery -> createdDeliveryAddressIds.add(delivery.getId()));
+        });
 
         assertEquals(new BigDecimal("50.00"), response.total());
         assertEquals(2, response.items().size());
@@ -323,8 +374,12 @@ public class OrderServiceIntegrationTest {
         variant.setPrice(new BigDecimal("12.50"));
         productVariantRepository.save(variant);
 
-        OrderResponseDto response = orderService.checkout(customer.getId());
+        OrderResponseDto response = orderService.checkout(customer.getId(), null);
         createdOrderIds.add(response.id());
+        transactionTemplate.executeWithoutResult(status -> {
+            orderDeliveryAddressRepository.findByOrderId(response.id())
+                    .ifPresent(delivery -> createdDeliveryAddressIds.add(delivery.getId()));
+        });
 
         assertEquals(new BigDecimal("12.50"), response.total());
         assertEquals(new BigDecimal("12.50"), response.items().get(0).unitPrice());
@@ -347,7 +402,7 @@ public class OrderServiceIntegrationTest {
         ProductVariant variant = createSavedVariant(inactiveProduct, "SKU-I1-" + UUID.randomUUID(), "S", "Red", 10, "10.00");
         addCartItem(customer, variant, 1);
 
-        assertThrows(ResourceConflictException.class, () -> orderService.checkout(customer.getId()));
+        assertThrows(ResourceConflictException.class, () -> orderService.checkout(customer.getId(), null));
 
         ProductVariant updatedVariant = productVariantRepository.findById(variant.getId()).orElseThrow();
         assertEquals(10, updatedVariant.getStockQuantity());
@@ -364,7 +419,7 @@ public class OrderServiceIntegrationTest {
         addCartItem(customer, var1, 1);
         addCartItem(customer, var2, 5);
 
-        assertThrows(ResourceConflictException.class, () -> orderService.checkout(customer.getId()));
+        assertThrows(ResourceConflictException.class, () -> orderService.checkout(customer.getId(), null));
 
         ProductVariant updated1 = productVariantRepository.findById(var1.getId()).orElseThrow();
         assertEquals(10, updated1.getStockQuantity());
@@ -381,7 +436,7 @@ public class OrderServiceIntegrationTest {
         ProductVariant variant = createSavedVariant(testProduct, "SKU-C1-" + UUID.randomUUID(), "S", "Red", 10, "10.00");
         addCartItem(customer, variant, 1);
 
-        assertThrows(ResourceConflictException.class, () -> orderService.checkout(customer2.getId()));
+        assertThrows(ResourceConflictException.class, () -> orderService.checkout(customer2.getId(), null));
 
         ProductVariant updated = productVariantRepository.findById(variant.getId()).orElseThrow();
         assertEquals(10, updated.getStockQuantity());
@@ -395,7 +450,7 @@ public class OrderServiceIntegrationTest {
         ProductVariant variant = createSavedVariant(testProduct, "SKU-N1-" + UUID.randomUUID(), "S", "Red", 2, "10.00");
         addCartItem(customer, variant, 3);
 
-        assertThrows(ResourceConflictException.class, () -> orderService.checkout(customer.getId()));
+        assertThrows(ResourceConflictException.class, () -> orderService.checkout(customer.getId(), null));
 
         ProductVariant updated = productVariantRepository.findById(variant.getId()).orElseThrow();
         assertEquals(2, updated.getStockQuantity());
@@ -406,8 +461,12 @@ public class OrderServiceIntegrationTest {
         ProductVariant variant = createSavedVariant(testProduct, "SKU-B1-" + UUID.randomUUID(), "S", "Red", 10, "15.00");
         addCartItem(customer, variant, 2);
 
-        OrderResponseDto response = orderService.checkout(customer.getId());
+        OrderResponseDto response = orderService.checkout(customer.getId(), null);
         createdOrderIds.add(response.id());
+        transactionTemplate.executeWithoutResult(status -> {
+            orderDeliveryAddressRepository.findByOrderId(response.id())
+                    .ifPresent(delivery -> createdDeliveryAddressIds.add(delivery.getId()));
+        });
 
         assertNotNull(response.id());
         assertNotNull(response.status());
