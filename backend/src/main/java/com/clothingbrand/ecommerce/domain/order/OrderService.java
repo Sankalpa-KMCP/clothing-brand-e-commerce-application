@@ -10,6 +10,9 @@ import com.clothingbrand.ecommerce.domain.user.User;
 import com.clothingbrand.ecommerce.domain.user.UserRepository;
 import com.clothingbrand.ecommerce.exception.ResourceConflictException;
 import com.clothingbrand.ecommerce.exception.ResourceNotFoundException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,6 +23,8 @@ import java.util.List;
 
 @Service
 public class OrderService {
+
+    private static final int MAX_ORDER_HISTORY_PAGE_SIZE = 50;
 
     private final CartRepository cartRepository;
     private final ProductVariantRepository productVariantRepository;
@@ -139,7 +144,83 @@ public class OrderService {
         return mapToResponse(order);
     }
 
+    @Transactional(readOnly = true)
+    public OrderHistoryPageResponseDto getMyOrders(Long authenticatedUserId, int page, int size) {
+        if (authenticatedUserId == null) {
+            throw new IllegalArgumentException("Authenticated user ID cannot be null");
+        }
+        validateOrderHistoryPagination(page, size);
+
+        PageRequest pageRequest = PageRequest.of(
+                page,
+                size,
+                Sort.by(Sort.Order.desc("createdAt"), Sort.Order.desc("id"))
+        );
+        Page<CustomerOrder> orders = customerOrderRepository.findByUserId(authenticatedUserId, pageRequest);
+        List<OrderSummaryResponseDto> content = orders.getContent().stream()
+                .map(this::mapToSummaryResponse)
+                .toList();
+
+        return new OrderHistoryPageResponseDto(
+                content,
+                orders.getNumber(),
+                orders.getSize(),
+                orders.getTotalElements(),
+                orders.getTotalPages(),
+                orders.isFirst(),
+                orders.isLast()
+        );
+    }
+
+    @Transactional(readOnly = true)
+    public OrderDetailResponseDto getMyOrder(Long authenticatedUserId, Long orderId) {
+        if (authenticatedUserId == null) {
+            throw new IllegalArgumentException("Authenticated user ID cannot be null");
+        }
+        if (orderId == null) {
+            throw new IllegalArgumentException("Order ID cannot be null");
+        }
+
+        CustomerOrder order = customerOrderRepository.findByIdAndUserIdWithItems(orderId, authenticatedUserId)
+                .orElseThrow(() -> new ResourceNotFoundException("Order not found"));
+
+        return mapToDetailResponse(order);
+    }
+
     private OrderResponseDto mapToResponse(CustomerOrder order) {
+        List<OrderItemResponseDto> itemDtos = mapToItemResponses(order);
+
+        return new OrderResponseDto(
+                order.getId(),
+                order.getStatus().name(),
+                order.getSubtotal(),
+                order.getTotal(),
+                itemDtos
+        );
+    }
+
+    private OrderSummaryResponseDto mapToSummaryResponse(CustomerOrder order) {
+        return new OrderSummaryResponseDto(
+                order.getId(),
+                order.getStatus().name(),
+                order.getSubtotal(),
+                order.getTotal(),
+                order.getCreatedAt()
+        );
+    }
+
+    private OrderDetailResponseDto mapToDetailResponse(CustomerOrder order) {
+        return new OrderDetailResponseDto(
+                order.getId(),
+                order.getStatus().name(),
+                order.getSubtotal(),
+                order.getTotal(),
+                order.getCreatedAt(),
+                mapToItemResponses(order)
+        );
+    }
+
+    private List<OrderItemResponseDto> mapToItemResponses(CustomerOrder order) {
         List<OrderItemResponseDto> itemDtos = order.getItems().stream()
                 .map(item -> new OrderItemResponseDto(
                         item.getProductName(),
@@ -152,12 +233,15 @@ public class OrderService {
                 ))
                 .toList();
 
-        return new OrderResponseDto(
-                order.getId(),
-                order.getStatus().name(),
-                order.getSubtotal(),
-                order.getTotal(),
-                itemDtos
-        );
+        return itemDtos;
+    }
+
+    private void validateOrderHistoryPagination(int page, int size) {
+        if (page < 0) {
+            throw new IllegalArgumentException("Page index must not be negative");
+        }
+        if (size <= 0 || size > MAX_ORDER_HISTORY_PAGE_SIZE) {
+            throw new IllegalArgumentException("Page size must be between 1 and 50");
+        }
     }
 }
