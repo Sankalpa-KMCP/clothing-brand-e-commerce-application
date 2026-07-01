@@ -49,7 +49,7 @@ public class RefreshTokenIntegrationTest {
         if (fixtureUser != null && fixtureUser.getId() != null) {
             userRepository.deleteById(fixtureUser.getId());
             userRepository.flush(); // To ensure constraints are checked immediately
-            
+
             // Independent post-cleanup absence verification ensuring FK cascade worked
             assertTrue(refreshTokenRepository.findAll().stream()
                     .noneMatch(rt -> rt.getUser().getId().equals(fixtureUser.getId())));
@@ -96,7 +96,7 @@ public class RefreshTokenIntegrationTest {
         rt2.setUser(fixtureUser);
         rt2.setStatus(RefreshTokenStatus.ACTIVE);
         rt2.setExpiresAt(OffsetDateTime.now().plusDays(7));
-        
+
         assertThrows(DataIntegrityViolationException.class, () -> {
             refreshTokenRepository.saveAndFlush(rt2);
         });
