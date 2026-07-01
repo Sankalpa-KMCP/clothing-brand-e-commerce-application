@@ -119,7 +119,7 @@ public class RefreshIntegrationTest {
 
         AuthResponseDto loginResponse = objectMapper.readValue(loginResult.getResponse().getContentAsString(), AuthResponseDto.class);
         assertNotNull(loginResponse.getRefreshToken());
-        
+
         // Cleanup dynamically created user
         userRepository.deleteById(registerResponse.getUser().getId());
     }
