@@ -484,7 +484,7 @@ class OrderControllerIntegrationTest {
         user.setActive(true);
         user = userRepository.save(user);
         createdUserIds.add(user.getId());
-                
+
         CustomerAddress address = new CustomerAddress();
         address.setUser(user);
         address.setRecipientName(user.getFirstName());
