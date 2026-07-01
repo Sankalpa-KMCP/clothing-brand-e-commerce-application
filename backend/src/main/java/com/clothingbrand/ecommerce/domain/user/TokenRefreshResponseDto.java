@@ -1,22 +1,15 @@
 package com.clothingbrand.ecommerce.domain.user;
 
-public class AuthResponseDto {
+public class TokenRefreshResponseDto {
     private String token;
     private String refreshToken;
-    private UserDto user;
 
-    public AuthResponseDto() {
+    public TokenRefreshResponseDto() {
     }
 
-    public AuthResponseDto(String token, UserDto user) {
-        this.token = token;
-        this.user = user;
-    }
-
-    public AuthResponseDto(String token, String refreshToken, UserDto user) {
+    public TokenRefreshResponseDto(String token, String refreshToken) {
         this.token = token;
         this.refreshToken = refreshToken;
-        this.user = user;
     }
 
     public String getToken() {
@@ -25,14 +18,6 @@ public class AuthResponseDto {
 
     public void setToken(String token) {
         this.token = token;
-    }
-
-    public UserDto getUser() {
-        return user;
-    }
-
-    public void setUser(UserDto user) {
-        this.user = user;
     }
 
     public String getRefreshToken() {

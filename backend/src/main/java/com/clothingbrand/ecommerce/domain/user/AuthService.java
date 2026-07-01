@@ -2,7 +2,9 @@ package com.clothingbrand.ecommerce.domain.user;
 
 import com.clothingbrand.ecommerce.exception.DuplicateResourceException;
 import com.clothingbrand.ecommerce.exception.InvalidCredentialsException;
+import com.clothingbrand.ecommerce.exception.InvalidRefreshTokenException;
 import com.clothingbrand.ecommerce.exception.ResourceNotFoundException;
+import com.clothingbrand.ecommerce.security.JwtProperties;
 import com.clothingbrand.ecommerce.security.JwtService;
 import com.clothingbrand.ecommerce.security.UserDetailsImpl;
 import org.hibernate.exception.ConstraintViolationException;
@@ -18,12 +20,16 @@ public class AuthService {
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
+    private final JwtProperties jwtProperties;
+    private final RefreshTokenService refreshTokenService;
 
-    public AuthService(UserRepository userRepository, RoleRepository roleRepository, PasswordEncoder passwordEncoder, JwtService jwtService) {
+    public AuthService(UserRepository userRepository, RoleRepository roleRepository, PasswordEncoder passwordEncoder, JwtService jwtService, JwtProperties jwtProperties, RefreshTokenService refreshTokenService) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
+        this.jwtProperties = jwtProperties;
+        this.refreshTokenService = refreshTokenService;
     }
 
     @Transactional
@@ -59,7 +65,7 @@ public class AuthService {
         return getAuthResponse(user);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public AuthResponseDto login(LoginRequestDto request) {
         String normalizedEmail = request.getEmail().trim().toLowerCase();
 
@@ -90,7 +96,29 @@ public class AuthService {
     private AuthResponseDto getAuthResponse(User user) {
         UserDetailsImpl userDetails = new UserDetailsImpl(user);
         String token = jwtService.generateToken(userDetails);
+
+        RefreshTokenService.RefreshTokenResult result = refreshTokenService.issueToken(user, jwtProperties.getRefreshExpirationMs());
+
         UserDto userDto = mapToUserDto(user);
-        return new AuthResponseDto(token, userDto);
+        return new AuthResponseDto(token, result.rawToken(), userDto);
+    }
+
+    @Transactional
+    public TokenRefreshResponseDto refresh(RefreshTokenRequestDto request) {
+        RefreshTokenService.RefreshTokenResult result = refreshTokenService.rotateToken(request.getRefreshToken(), jwtProperties.getRefreshExpirationMs())
+                .orElseThrow(() -> new InvalidRefreshTokenException("Invalid refresh token"));
+
+        User user = userRepository.findById(result.tokenEntity().getUser().getId())
+                .orElseThrow(() -> new InvalidRefreshTokenException("Invalid refresh token"));
+
+        UserDetailsImpl userDetails = new UserDetailsImpl(user);
+        String token = jwtService.generateToken(userDetails);
+
+        return new TokenRefreshResponseDto(token, result.rawToken());
+    }
+
+    @Transactional
+    public void logout(LogoutRequestDto request) {
+        refreshTokenService.revokeToken(request.getRefreshToken());
     }
 }
