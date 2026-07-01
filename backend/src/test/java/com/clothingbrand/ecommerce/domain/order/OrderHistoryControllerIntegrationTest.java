@@ -404,7 +404,7 @@ class OrderHistoryControllerIntegrationTest {
                 .andExpect(jsonPath("$.items[0].productVariant").doesNotExist())
                 .andReturn();
 
-        assertJsonFields(result, "", "id", "status", "subtotal", "total", "createdAt", "items", "statusHistory");
+        assertJsonFields(result, "", "id", "status", "subtotal", "total", "createdAt", "items", "statusHistory", "deliveryAddress");
         assertJsonFields(result, "/items/0", "productName", "productImageUrl", "size", "color", "quantity", "unitPrice", "lineTotal");
     }
 

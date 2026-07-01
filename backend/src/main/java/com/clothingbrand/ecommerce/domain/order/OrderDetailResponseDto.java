@@ -11,6 +11,7 @@ public record OrderDetailResponseDto(
         BigDecimal total,
         OffsetDateTime createdAt,
         List<OrderItemResponseDto> items,
-        List<OrderStatusHistoryResponseDto> statusHistory
+        List<OrderStatusHistoryResponseDto> statusHistory,
+        OrderDeliveryAddressResponseDto deliveryAddress
 ) {
 }

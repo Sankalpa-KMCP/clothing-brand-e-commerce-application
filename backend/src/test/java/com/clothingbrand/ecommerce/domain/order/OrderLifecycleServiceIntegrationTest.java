@@ -428,7 +428,7 @@ class OrderLifecycleServiceIntegrationTest {
         assertFalse(cancelledOnly.content().stream().map(OrderSummaryResponseDto::id).toList().contains(placed.id()));
         assertEquals("PLACED", detail.status());
         assertEquals(1, detail.statusHistory().size());
-        assertEquals(Set.of("id", "status", "subtotal", "total", "createdAt", "items", "statusHistory"),
+        assertEquals(Set.of("id", "status", "subtotal", "total", "createdAt", "items", "statusHistory", "deliveryAddress"),
                 recordFields(OrderDetailResponseDto.class));
         assertThrows(IllegalArgumentException.class, () -> orderService.getAdminOrders(-1, 20, null));
     }

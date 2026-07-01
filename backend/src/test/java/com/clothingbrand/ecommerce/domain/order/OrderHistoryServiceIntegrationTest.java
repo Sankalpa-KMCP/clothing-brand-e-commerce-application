@@ -369,7 +369,7 @@ class OrderHistoryServiceIntegrationTest {
         assertTrue(response.statusHistory().isEmpty());
         assertEquals(Set.of("productName", "productImageUrl", "size", "color", "quantity", "unitPrice", "lineTotal"),
                 recordFields(OrderItemResponseDto.class));
-        assertEquals(Set.of("id", "status", "subtotal", "total", "createdAt", "items", "statusHistory"),
+        assertEquals(Set.of("id", "status", "subtotal", "total", "createdAt", "items", "statusHistory", "deliveryAddress"),
                 recordFields(OrderDetailResponseDto.class));
         assertEquals(Set.of("previousStatus", "newStatus", "actorType", "createdAt"),
                 recordFields(OrderStatusHistoryResponseDto.class));

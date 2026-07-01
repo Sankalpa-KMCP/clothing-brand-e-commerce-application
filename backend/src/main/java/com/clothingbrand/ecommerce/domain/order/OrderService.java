@@ -354,6 +354,19 @@ public class OrderService {
     }
 
     private OrderDetailResponseDto mapToDetailResponse(CustomerOrder order) {
+        OrderDeliveryAddressResponseDto deliveryDto = orderDeliveryAddressRepository.findByOrderId(order.getId())
+                .map(delivery -> new OrderDeliveryAddressResponseDto(
+                        delivery.getRecipientName(),
+                        delivery.getPhoneNumber(),
+                        delivery.getAddressLine1(),
+                        delivery.getAddressLine2(),
+                        delivery.getCity(),
+                        delivery.getRegion(),
+                        delivery.getPostalCode(),
+                        delivery.getCountry()
+                ))
+                .orElse(null);
+
         return new OrderDetailResponseDto(
                 order.getId(),
                 order.getStatus().name(),
@@ -361,7 +374,8 @@ public class OrderService {
                 order.getTotal(),
                 order.getCreatedAt(),
                 mapToItemResponses(order),
-                mapToHistoryResponses(order.getId())
+                mapToHistoryResponses(order.getId()),
+                deliveryDto
         );
     }
 
