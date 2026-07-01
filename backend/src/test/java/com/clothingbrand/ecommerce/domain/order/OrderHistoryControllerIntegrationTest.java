@@ -79,6 +79,9 @@ class OrderHistoryControllerIntegrationTest {
     private OrderItemRepository orderItemRepository;
 
     @Autowired
+    private OrderStatusHistoryRepository orderStatusHistoryRepository;
+
+    @Autowired
     private PasswordEncoder passwordEncoder;
 
     @Autowired
@@ -101,6 +104,7 @@ class OrderHistoryControllerIntegrationTest {
 
     private final List<Long> createdOrderIds = new ArrayList<>();
     private final List<Long> createdOrderItemIds = new ArrayList<>();
+    private final List<Long> createdHistoryIds = new ArrayList<>();
     private final List<Long> createdCartIds = new ArrayList<>();
     private final List<Long> createdCartItemIds = new ArrayList<>();
     private final List<Long> createdVariantIds = new ArrayList<>();
@@ -112,6 +116,7 @@ class OrderHistoryControllerIntegrationTest {
     void setup() {
         createdOrderIds.clear();
         createdOrderItemIds.clear();
+        createdHistoryIds.clear();
         createdCartIds.clear();
         createdCartItemIds.clear();
         createdVariantIds.clear();
@@ -153,11 +158,27 @@ class OrderHistoryControllerIntegrationTest {
 
             for (Long orderId : createdOrderIds) {
                 customerOrderRepository.findById(orderId).ifPresent(order -> {
+                    orderStatusHistoryRepository.findByOrderIdOrderByCreatedAtAscIdAsc(orderId).forEach(history -> {
+                        if (!createdHistoryIds.contains(history.getId())) {
+                            createdHistoryIds.add(history.getId());
+                        }
+                    });
                     order.getItems().forEach(item -> {
                         if (!createdOrderItemIds.contains(item.getId())) {
                             createdOrderItemIds.add(item.getId());
                         }
                     });
+                });
+            }
+
+            for (Long historyId : createdHistoryIds) {
+                if (orderStatusHistoryRepository.existsById(historyId)) {
+                    orderStatusHistoryRepository.deleteById(historyId);
+                }
+            }
+
+            for (Long orderId : createdOrderIds) {
+                customerOrderRepository.findById(orderId).ifPresent(order -> {
                     order.getItems().clear();
                     customerOrderRepository.saveAndFlush(order);
                     customerOrderRepository.deleteById(orderId);
@@ -212,6 +233,9 @@ class OrderHistoryControllerIntegrationTest {
         });
 
         transactionTemplate.executeWithoutResult(status -> {
+            for (Long historyId : createdHistoryIds) {
+                assertTrue(orderStatusHistoryRepository.findById(historyId).isEmpty(), "OrderStatusHistory leak: " + historyId);
+            }
             for (Long orderId : createdOrderIds) {
                 assertTrue(customerOrderRepository.findById(orderId).isEmpty(), "Order leak: " + orderId);
             }
@@ -329,12 +353,15 @@ class OrderHistoryControllerIntegrationTest {
                 .andExpect(jsonPath("$.items[0].quantity").value(2))
                 .andExpect(jsonPath("$.items[0].unitPrice").value(15.00))
                 .andExpect(jsonPath("$.items[0].lineTotal").value(30.00))
+                .andExpect(jsonPath("$.statusHistory").isArray())
+                .andExpect(jsonPath("$.statusHistory").isEmpty())
                 .andExpect(jsonPath("$.sku").doesNotExist())
                 .andExpect(jsonPath("$.stockQuantity").doesNotExist())
                 .andExpect(jsonPath("$.userId").doesNotExist())
                 .andExpect(jsonPath("$.cartId").doesNotExist())
                 .andExpect(jsonPath("$.originalProductId").doesNotExist())
                 .andExpect(jsonPath("$.originalVariantId").doesNotExist())
+                .andExpect(jsonPath("$.actorUserId").doesNotExist())
                 .andExpect(jsonPath("$.items[0].sku").doesNotExist())
                 .andExpect(jsonPath("$.items[0].stockQuantity").doesNotExist())
                 .andExpect(jsonPath("$.items[0].userId").doesNotExist())
@@ -346,7 +373,7 @@ class OrderHistoryControllerIntegrationTest {
                 .andExpect(jsonPath("$.items[0].productVariant").doesNotExist())
                 .andReturn();
 
-        assertJsonFields(result, "", "id", "status", "subtotal", "total", "createdAt", "items");
+        assertJsonFields(result, "", "id", "status", "subtotal", "total", "createdAt", "items", "statusHistory");
         assertJsonFields(result, "/items/0", "productName", "productImageUrl", "size", "color", "quantity", "unitPrice", "lineTotal");
     }
 
@@ -505,7 +532,13 @@ class OrderHistoryControllerIntegrationTest {
                         .header("Authorization", "Bearer " + customerToken))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(orderId))
-                .andExpect(jsonPath("$.items[0].sku").doesNotExist());
+                .andExpect(jsonPath("$.items[0].sku").doesNotExist())
+                .andExpect(jsonPath("$.statusHistory.length()").value(1))
+                .andExpect(jsonPath("$.statusHistory[0].previousStatus").isEmpty())
+                .andExpect(jsonPath("$.statusHistory[0].newStatus").value("PLACED"))
+                .andExpect(jsonPath("$.statusHistory[0].actorType").value("CUSTOMER"))
+                .andExpect(jsonPath("$.statusHistory[0].createdAt").exists())
+                .andExpect(jsonPath("$.statusHistory[0].actorUserId").doesNotExist());
     }
 
     private User createUser(Role role, String label) {

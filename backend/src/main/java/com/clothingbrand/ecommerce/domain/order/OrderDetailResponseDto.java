@@ -10,6 +10,7 @@ public record OrderDetailResponseDto(
         BigDecimal subtotal,
         BigDecimal total,
         OffsetDateTime createdAt,
-        List<OrderItemResponseDto> items
+        List<OrderItemResponseDto> items,
+        List<OrderStatusHistoryResponseDto> statusHistory
 ) {
 }

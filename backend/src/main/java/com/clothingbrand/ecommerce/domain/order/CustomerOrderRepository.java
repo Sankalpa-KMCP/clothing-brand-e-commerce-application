@@ -1,8 +1,10 @@
 package com.clothingbrand.ecommerce.domain.order;
 
+import jakarta.persistence.LockModeType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -13,6 +15,19 @@ import java.util.Optional;
 public interface CustomerOrderRepository extends JpaRepository<CustomerOrder, Long> {
     Page<CustomerOrder> findByUserId(Long userId, Pageable pageable);
 
+    Page<CustomerOrder> findByStatus(OrderStatus status, Pageable pageable);
+
     @Query("SELECT DISTINCT o FROM CustomerOrder o LEFT JOIN FETCH o.items WHERE o.id = :orderId AND o.user.id = :userId")
     Optional<CustomerOrder> findByIdAndUserIdWithItems(@Param("orderId") Long orderId, @Param("userId") Long userId);
+
+    @Query("SELECT DISTINCT o FROM CustomerOrder o LEFT JOIN FETCH o.items WHERE o.id = :orderId")
+    Optional<CustomerOrder> findByIdWithItems(@Param("orderId") Long orderId);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT o FROM CustomerOrder o WHERE o.id = :orderId AND o.user.id = :userId")
+    Optional<CustomerOrder> findByIdAndUserIdForUpdate(@Param("orderId") Long orderId, @Param("userId") Long userId);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT o FROM CustomerOrder o WHERE o.id = :orderId")
+    Optional<CustomerOrder> findByIdForUpdate(@Param("orderId") Long orderId);
 }

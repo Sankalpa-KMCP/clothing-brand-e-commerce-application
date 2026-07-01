@@ -43,4 +43,12 @@ public class OrderController {
         OrderDetailResponseDto response = orderService.getMyOrder(userDetails.getUser().getId(), orderId);
         return ResponseEntity.ok(response);
     }
+
+    @PostMapping("/{orderId}/cancel")
+    public ResponseEntity<OrderDetailResponseDto> cancelMyOrder(
+            @AuthenticationPrincipal UserDetailsImpl userDetails,
+            @PathVariable Long orderId) {
+        OrderDetailResponseDto response = orderService.cancelMyOrder(userDetails.getUser().getId(), orderId);
+        return ResponseEntity.ok(response);
+    }
 }

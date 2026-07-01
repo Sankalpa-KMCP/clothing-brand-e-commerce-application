@@ -19,29 +19,46 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.EnumMap;
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 @Service
 public class OrderService {
 
     private static final int MAX_ORDER_HISTORY_PAGE_SIZE = 50;
+    private static final Map<OrderStatus, Set<OrderStatus>> ADMIN_TRANSITIONS = new EnumMap<>(OrderStatus.class);
+
+    static {
+        ADMIN_TRANSITIONS.put(OrderStatus.PLACED, EnumSet.of(OrderStatus.PROCESSING, OrderStatus.CANCELLED));
+        ADMIN_TRANSITIONS.put(OrderStatus.PROCESSING, EnumSet.of(OrderStatus.SHIPPED, OrderStatus.CANCELLED));
+        ADMIN_TRANSITIONS.put(OrderStatus.SHIPPED, EnumSet.of(OrderStatus.DELIVERED));
+        ADMIN_TRANSITIONS.put(OrderStatus.DELIVERED, EnumSet.noneOf(OrderStatus.class));
+        ADMIN_TRANSITIONS.put(OrderStatus.CANCELLED, EnumSet.noneOf(OrderStatus.class));
+    }
 
     private final CartRepository cartRepository;
     private final ProductVariantRepository productVariantRepository;
     private final CustomerOrderRepository customerOrderRepository;
+    private final OrderStatusHistoryRepository orderStatusHistoryRepository;
     private final UserRepository userRepository;
 
     public OrderService(CartRepository cartRepository,
                         ProductVariantRepository productVariantRepository,
                         CustomerOrderRepository customerOrderRepository,
+                        OrderStatusHistoryRepository orderStatusHistoryRepository,
                         UserRepository userRepository) {
         this.cartRepository = cartRepository;
         this.productVariantRepository = productVariantRepository;
         this.customerOrderRepository = customerOrderRepository;
+        this.orderStatusHistoryRepository = orderStatusHistoryRepository;
         this.userRepository = userRepository;
     }
 
     record CheckoutItemInput(Long cartId, Long userId, Long productId, Long variantId, Integer requestedQuantity) {}
+    record RestockLine(Long productId, Long variantId, Integer quantity) {}
 
     @Transactional
     public OrderResponseDto checkout(Long authenticatedUserId) {
@@ -135,6 +152,7 @@ public class OrderService {
         }
 
         order = customerOrderRepository.save(order);
+        createStatusHistory(order, null, OrderStatus.PLACED, OrderActorType.CUSTOMER, authenticatedUserId);
 
         // Reload cart to clear items
         Cart cartToClear = cartRepository.findById(checkoutInputs.get(0).cartId())
@@ -187,6 +205,102 @@ public class OrderService {
         return mapToDetailResponse(order);
     }
 
+    @Transactional
+    public OrderDetailResponseDto cancelMyOrder(Long authenticatedUserId, Long orderId) {
+        if (authenticatedUserId == null) {
+            throw new IllegalArgumentException("Authenticated user ID cannot be null");
+        }
+        if (orderId == null) {
+            throw new IllegalArgumentException("Order ID cannot be null");
+        }
+
+        CustomerOrder lockedOrder = customerOrderRepository.findByIdAndUserIdForUpdate(orderId, authenticatedUserId)
+                .orElseThrow(() -> new ResourceNotFoundException("Order not found"));
+        if (lockedOrder.getStatus() != OrderStatus.PLACED) {
+            throw new ResourceConflictException("Order cannot be cancelled from status " + lockedOrder.getStatus().name());
+        }
+
+        restoreStockFromSnapshots(lockedOrder);
+        CustomerOrder orderToUpdate = customerOrderRepository.findByIdAndUserIdForUpdate(orderId, authenticatedUserId)
+                .orElseThrow(() -> new ResourceNotFoundException("Order not found"));
+        orderToUpdate.setStatus(OrderStatus.CANCELLED);
+        createStatusHistory(orderToUpdate, OrderStatus.PLACED, OrderStatus.CANCELLED, OrderActorType.CUSTOMER, authenticatedUserId);
+
+        CustomerOrder detail = customerOrderRepository.findByIdAndUserIdWithItems(orderId, authenticatedUserId)
+                .orElseThrow(() -> new ResourceNotFoundException("Order not found"));
+        return mapToDetailResponse(detail);
+    }
+
+    @Transactional(readOnly = true)
+    public OrderHistoryPageResponseDto getAdminOrders(int page, int size, OrderStatus status) {
+        validateOrderHistoryPagination(page, size);
+
+        PageRequest pageRequest = PageRequest.of(
+                page,
+                size,
+                Sort.by(Sort.Order.desc("createdAt"), Sort.Order.desc("id"))
+        );
+        Page<CustomerOrder> orders = status == null
+                ? customerOrderRepository.findAll(pageRequest)
+                : customerOrderRepository.findByStatus(status, pageRequest);
+        List<OrderSummaryResponseDto> content = orders.getContent().stream()
+                .map(this::mapToSummaryResponse)
+                .toList();
+
+        return new OrderHistoryPageResponseDto(
+                content,
+                orders.getNumber(),
+                orders.getSize(),
+                orders.getTotalElements(),
+                orders.getTotalPages(),
+                orders.isFirst(),
+                orders.isLast()
+        );
+    }
+
+    @Transactional(readOnly = true)
+    public OrderDetailResponseDto getAdminOrder(Long orderId) {
+        if (orderId == null) {
+            throw new IllegalArgumentException("Order ID cannot be null");
+        }
+
+        CustomerOrder order = customerOrderRepository.findByIdWithItems(orderId)
+                .orElseThrow(() -> new ResourceNotFoundException("Order not found"));
+        return mapToDetailResponse(order);
+    }
+
+    @Transactional
+    public OrderDetailResponseDto updateOrderStatus(Long authenticatedAdminUserId, Long orderId, AdminOrderStatusUpdateRequestDto request) {
+        if (authenticatedAdminUserId == null) {
+            throw new IllegalArgumentException("Authenticated user ID cannot be null");
+        }
+        if (orderId == null) {
+            throw new IllegalArgumentException("Order ID cannot be null");
+        }
+        if (request == null || request.status() == null) {
+            throw new IllegalArgumentException("Status is required");
+        }
+
+        CustomerOrder lockedOrder = customerOrderRepository.findByIdForUpdate(orderId)
+                .orElseThrow(() -> new ResourceNotFoundException("Order not found"));
+        OrderStatus previousStatus = lockedOrder.getStatus();
+        OrderStatus newStatus = request.status();
+        validateAdminTransition(previousStatus, newStatus);
+
+        if (newStatus == OrderStatus.CANCELLED) {
+            restoreStockFromSnapshots(lockedOrder);
+            lockedOrder = customerOrderRepository.findByIdForUpdate(orderId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Order not found"));
+        }
+
+        lockedOrder.setStatus(newStatus);
+        createStatusHistory(lockedOrder, previousStatus, newStatus, OrderActorType.ADMIN, authenticatedAdminUserId);
+
+        CustomerOrder detail = customerOrderRepository.findByIdWithItems(orderId)
+                .orElseThrow(() -> new ResourceNotFoundException("Order not found"));
+        return mapToDetailResponse(detail);
+    }
+
     private OrderResponseDto mapToResponse(CustomerOrder order) {
         List<OrderItemResponseDto> itemDtos = mapToItemResponses(order);
 
@@ -216,7 +330,8 @@ public class OrderService {
                 order.getSubtotal(),
                 order.getTotal(),
                 order.getCreatedAt(),
-                mapToItemResponses(order)
+                mapToItemResponses(order),
+                mapToHistoryResponses(order.getId())
         );
     }
 
@@ -243,5 +358,53 @@ public class OrderService {
         if (size <= 0 || size > MAX_ORDER_HISTORY_PAGE_SIZE) {
             throw new IllegalArgumentException("Page size must be between 1 and 50");
         }
+    }
+
+    private void validateAdminTransition(OrderStatus previousStatus, OrderStatus newStatus) {
+        if (newStatus == previousStatus) {
+            throw new ResourceConflictException("Order is already in status " + newStatus.name());
+        }
+        if (!ADMIN_TRANSITIONS.getOrDefault(previousStatus, Set.of()).contains(newStatus)) {
+            throw new ResourceConflictException("Cannot transition order from " + previousStatus.name() + " to " + newStatus.name());
+        }
+    }
+
+    private void restoreStockFromSnapshots(CustomerOrder order) {
+        List<RestockLine> restockLines = order.getItems().stream()
+                .map(item -> new RestockLine(item.getOriginalProductId(), item.getOriginalVariantId(), item.getQuantity()))
+                .sorted(Comparator.comparing(RestockLine::variantId))
+                .toList();
+
+        for (RestockLine line : restockLines) {
+            int updatedRows = productVariantRepository.adjustStock(line.productId(), line.variantId(), line.quantity());
+            if (updatedRows == 0) {
+                throw new ResourceConflictException("Order cannot be restocked");
+            }
+        }
+    }
+
+    private void createStatusHistory(CustomerOrder order,
+                                     OrderStatus previousStatus,
+                                     OrderStatus newStatus,
+                                     OrderActorType actorType,
+                                     Long actorUserId) {
+        OrderStatusHistory history = new OrderStatusHistory();
+        history.setOrder(order);
+        history.setPreviousStatus(previousStatus);
+        history.setNewStatus(newStatus);
+        history.setActorType(actorType);
+        history.setActorUserId(actorUserId);
+        orderStatusHistoryRepository.save(history);
+    }
+
+    private List<OrderStatusHistoryResponseDto> mapToHistoryResponses(Long orderId) {
+        return orderStatusHistoryRepository.findByOrderIdOrderByCreatedAtAscIdAsc(orderId).stream()
+                .map(history -> new OrderStatusHistoryResponseDto(
+                        history.getPreviousStatus() == null ? null : history.getPreviousStatus().name(),
+                        history.getNewStatus().name(),
+                        history.getActorType().name(),
+                        history.getCreatedAt()
+                ))
+                .toList();
     }
 }

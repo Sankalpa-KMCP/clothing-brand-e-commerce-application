@@ -70,6 +70,9 @@ class OrderHistoryServiceIntegrationTest {
     private OrderItemRepository orderItemRepository;
 
     @Autowired
+    private OrderStatusHistoryRepository orderStatusHistoryRepository;
+
+    @Autowired
     private TransactionTemplate transactionTemplate;
 
     private User customer;
@@ -79,6 +82,7 @@ class OrderHistoryServiceIntegrationTest {
 
     private final List<Long> createdOrderIds = new ArrayList<>();
     private final List<Long> createdOrderItemIds = new ArrayList<>();
+    private final List<Long> createdHistoryIds = new ArrayList<>();
     private final List<Long> createdCartIds = new ArrayList<>();
     private final List<Long> createdCartItemIds = new ArrayList<>();
     private final List<Long> createdVariantIds = new ArrayList<>();
@@ -90,6 +94,7 @@ class OrderHistoryServiceIntegrationTest {
     void setup() {
         createdOrderIds.clear();
         createdOrderItemIds.clear();
+        createdHistoryIds.clear();
         createdCartIds.clear();
         createdCartItemIds.clear();
         createdVariantIds.clear();
@@ -120,11 +125,27 @@ class OrderHistoryServiceIntegrationTest {
 
             for (Long orderId : createdOrderIds) {
                 customerOrderRepository.findById(orderId).ifPresent(order -> {
+                    orderStatusHistoryRepository.findByOrderIdOrderByCreatedAtAscIdAsc(orderId).forEach(history -> {
+                        if (!createdHistoryIds.contains(history.getId())) {
+                            createdHistoryIds.add(history.getId());
+                        }
+                    });
                     order.getItems().forEach(item -> {
                         if (!createdOrderItemIds.contains(item.getId())) {
                             createdOrderItemIds.add(item.getId());
                         }
                     });
+                });
+            }
+
+            for (Long historyId : createdHistoryIds) {
+                if (orderStatusHistoryRepository.existsById(historyId)) {
+                    orderStatusHistoryRepository.deleteById(historyId);
+                }
+            }
+
+            for (Long orderId : createdOrderIds) {
+                customerOrderRepository.findById(orderId).ifPresent(order -> {
                     order.getItems().clear();
                     customerOrderRepository.saveAndFlush(order);
                     customerOrderRepository.deleteById(orderId);
@@ -179,6 +200,9 @@ class OrderHistoryServiceIntegrationTest {
         });
 
         transactionTemplate.executeWithoutResult(status -> {
+            for (Long historyId : createdHistoryIds) {
+                assertTrue(orderStatusHistoryRepository.findById(historyId).isEmpty(), "OrderStatusHistory leak: " + historyId);
+            }
             for (Long orderId : createdOrderIds) {
                 assertTrue(customerOrderRepository.findById(orderId).isEmpty(), "Order leak: " + orderId);
             }
@@ -311,10 +335,13 @@ class OrderHistoryServiceIntegrationTest {
         assertEquals(2, response.items().get(0).quantity());
         assertEquals(new BigDecimal("15.00"), response.items().get(0).unitPrice());
         assertEquals(new BigDecimal("30.00"), response.items().get(0).lineTotal());
+        assertTrue(response.statusHistory().isEmpty());
         assertEquals(Set.of("productName", "productImageUrl", "size", "color", "quantity", "unitPrice", "lineTotal"),
                 recordFields(OrderItemResponseDto.class));
-        assertEquals(Set.of("id", "status", "subtotal", "total", "createdAt", "items"),
+        assertEquals(Set.of("id", "status", "subtotal", "total", "createdAt", "items", "statusHistory"),
                 recordFields(OrderDetailResponseDto.class));
+        assertEquals(Set.of("previousStatus", "newStatus", "actorType", "createdAt"),
+                recordFields(OrderStatusHistoryResponseDto.class));
     }
 
     @Test
@@ -352,6 +379,7 @@ class OrderHistoryServiceIntegrationTest {
         assertEquals("M", response.items().get(0).size());
         assertEquals("Black", response.items().get(0).color());
         assertEquals(new BigDecimal("15.00"), response.items().get(0).unitPrice());
+        assertTrue(response.statusHistory().isEmpty());
     }
 
     @Test

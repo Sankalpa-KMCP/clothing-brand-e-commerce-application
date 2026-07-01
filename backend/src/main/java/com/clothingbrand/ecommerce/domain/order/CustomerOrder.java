@@ -4,6 +4,7 @@ import com.clothingbrand.ecommerce.domain.user.User;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -32,11 +33,14 @@ public class CustomerOrder {
     @Column(name = "created_at", insertable = false, updatable = false)
     private OffsetDateTime createdAt;
 
-    @Column(name = "updated_at", insertable = false, updatable = false)
+    @Column(name = "updated_at", insertable = false)
     private OffsetDateTime updatedAt;
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<OrderItem> items = new ArrayList<>();
+
+    @OneToMany(mappedBy = "order", cascade = CascadeType.REMOVE)
+    private List<OrderStatusHistory> statusHistories = new ArrayList<>();
 
     // Helpers
     public void addItem(OrderItem item) {
@@ -47,6 +51,11 @@ public class CustomerOrder {
     public void removeItem(OrderItem item) {
         items.remove(item);
         item.setOrder(null);
+    }
+
+    @PreUpdate
+    void updateTimestamp() {
+        updatedAt = OffsetDateTime.now(ZoneOffset.UTC);
     }
 
     // Getters and Setters

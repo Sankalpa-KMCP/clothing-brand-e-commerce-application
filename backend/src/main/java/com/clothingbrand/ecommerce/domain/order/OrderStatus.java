@@ -1,5 +1,9 @@
 package com.clothingbrand.ecommerce.domain.order;
 
 public enum OrderStatus {
-    PLACED
+    PLACED,
+    PROCESSING,
+    SHIPPED,
+    DELIVERED,
+    CANCELLED
 }
