@@ -5,6 +5,10 @@ import com.clothingbrand.ecommerce.domain.user.RoleName;
 import com.clothingbrand.ecommerce.domain.user.RoleRepository;
 import com.clothingbrand.ecommerce.domain.user.User;
 import com.clothingbrand.ecommerce.domain.user.UserRepository;
+import com.clothingbrand.ecommerce.domain.order.CustomerOrderRepository;
+import com.clothingbrand.ecommerce.domain.order.OrderStatusHistoryRepository;
+import com.clothingbrand.ecommerce.domain.order.OrderDeliveryAddressRepository;
+import com.clothingbrand.ecommerce.domain.order.OrderItemRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,6 +22,7 @@ import static org.springframework.security.test.web.servlet.setup.SecurityMockMv
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 
 @SpringBootTest
 @Transactional
@@ -40,6 +45,15 @@ class SecurityIntegrationTest {
     @Autowired
     private JwtProperties jwtProperties;
 
+    @Autowired
+    private CustomerOrderRepository customerOrderRepository;
+    @Autowired
+    private OrderStatusHistoryRepository orderStatusHistoryRepository;
+    @Autowired
+    private OrderDeliveryAddressRepository orderDeliveryAddressRepository;
+    @Autowired
+    private OrderItemRepository orderItemRepository;
+
     private User activeCustomer;
     private User activeAdmin;
     private User inactiveCustomer;
@@ -51,6 +65,10 @@ class SecurityIntegrationTest {
                 .apply(springSecurity())
                 .build();
 
+        orderStatusHistoryRepository.deleteAll();
+        orderDeliveryAddressRepository.deleteAll();
+        orderItemRepository.deleteAll();
+        customerOrderRepository.deleteAll();
         userRepository.deleteAll();
 
         Role customerRole = roleRepository.findByName(RoleName.ROLE_CUSTOMER).orElseThrow();
@@ -170,5 +188,14 @@ class SecurityIntegrationTest {
                         .header("Authorization", "Bearer not.a.valid.token"))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.status").value(401));
+    }
+
+    @Test
+    void testSecurityHeadersArePresent() throws Exception {
+        mockMvc.perform(get("/api/categories"))
+                .andExpect(status().isOk())
+                .andExpect(header().string("X-Frame-Options", "DENY"))
+                .andExpect(header().string("Content-Security-Policy", "default-src 'self'; frame-ancestors 'none';"))
+                .andExpect(header().string("Referrer-Policy", "no-referrer"));
     }
 }
