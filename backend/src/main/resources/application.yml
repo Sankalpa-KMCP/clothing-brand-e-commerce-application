@@ -19,11 +19,35 @@ spring:
   flyway:
     enabled: true
     locations: classpath:db/migration
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 5MB
 
 server:
   port: ${SERVER_PORT:8080}
 
 app:
+  storage:
+    type: ${STORAGE_TYPE:local}
+    s3:
+      endpoint: ${S3_ENDPOINT:}
+      region: ${S3_REGION:auto}
+      bucket-name: ${S3_BUCKET_NAME:}
+      access-key: ${S3_ACCESS_KEY:}
+      secret-key: ${S3_SECRET_KEY:}
+      public-url-prefix: ${S3_PUBLIC_URL_PREFIX:}
+      path-style-access: ${S3_PATH_STYLE_ACCESS:false}
+  migration:
+    local-to-s3:
+      enabled: ${MIGRATION_LOCAL_TO_S3_ENABLED:false}
+      confirm: ${MIGRATION_LOCAL_TO_S3_CONFIRM:false}
+      dry-run: ${MIGRATION_LOCAL_TO_S3_DRY_RUN:true}
+      report-path: ${MIGRATION_LOCAL_TO_S3_REPORT_PATH:migration-report.json}
+      auto-start: ${MIGRATION_LOCAL_TO_S3_AUTO_START:false}
+  upload:
+    dir: ${UPLOAD_DIR:uploads}
+    base-url: ${UPLOAD_BASE_URL:http://localhost:8080/api/images/}
   admin:
     bootstrap:
       enabled: ${ADMIN_BOOTSTRAP_ENABLED:false}
@@ -33,12 +57,79 @@ app:
     secret: ${JWT_SECRET}
     expiration-ms: ${JWT_EXPIRATION_MS:900000}
     refresh-expiration-ms: ${JWT_REFRESH_EXPIRATION_MS:604800000}
+  account:
+    frontend-base-url: ${ACCOUNT_FRONTEND_BASE_URL:http://localhost:5173}
+    email-verification:
+      enabled: ${EMAIL_VERIFICATION_ENABLED:true}
+      required: ${EMAIL_VERIFICATION_REQUIRED:false}
+      token-expiration-minutes: ${EMAIL_VERIFICATION_TOKEN_EXPIRATION_MINUTES:60}
+      legacy-users-exempt: ${EMAIL_VERIFICATION_LEGACY_USERS_EXEMPT:true}
+    password-reset:
+      enabled: ${PASSWORD_RESET_ENABLED:true}
+      token-expiration-minutes: ${PASSWORD_RESET_TOKEN_EXPIRATION_MINUTES:30}
+  email:
+    enabled: ${EMAIL_ENABLED:false}
+    mode: ${EMAIL_MODE:fake}
+    from-address: ${EMAIL_FROM_ADDRESS:noreply@example.com}
+    smtp:
+      host: ${EMAIL_SMTP_HOST:}
+      port: ${EMAIL_SMTP_PORT:587}
+      username: ${EMAIL_SMTP_USERNAME:}
+      password: ${EMAIL_SMTP_PASSWORD:}
+      start-tls: ${EMAIL_SMTP_START_TLS:true}
+  auth-rate-limit:
+    enabled: ${AUTH_RATE_LIMIT_ENABLED:true}
+    hash-secret: ${AUTH_RATE_LIMIT_HASH_SECRET:dev-rate-limit-secret-change-me}
+    rules:
+      register:
+        limit: ${AUTH_RATE_LIMIT_REGISTER_LIMIT:20}
+        window-seconds: ${AUTH_RATE_LIMIT_REGISTER_WINDOW_SECONDS:3600}
+      login:
+        limit: ${AUTH_RATE_LIMIT_LOGIN_LIMIT:30}
+        window-seconds: ${AUTH_RATE_LIMIT_LOGIN_WINDOW_SECONDS:900}
+      refresh:
+        limit: ${AUTH_RATE_LIMIT_REFRESH_LIMIT:60}
+        window-seconds: ${AUTH_RATE_LIMIT_REFRESH_WINDOW_SECONDS:900}
+      resend-verification:
+        limit: ${AUTH_RATE_LIMIT_RESEND_VERIFICATION_LIMIT:5}
+        window-seconds: ${AUTH_RATE_LIMIT_RESEND_VERIFICATION_WINDOW_SECONDS:3600}
+      forgot-password:
+        limit: ${AUTH_RATE_LIMIT_FORGOT_PASSWORD_LIMIT:5}
+        window-seconds: ${AUTH_RATE_LIMIT_FORGOT_PASSWORD_WINDOW_SECONDS:3600}
+      reset-password:
+        limit: ${AUTH_RATE_LIMIT_RESET_PASSWORD_LIMIT:10}
+        window-seconds: ${AUTH_RATE_LIMIT_RESET_PASSWORD_WINDOW_SECONDS:900}
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173}
+  payment:
+    stripe:
+      enabled: ${STRIPE_ENABLED:false}
+      secret-key: ${STRIPE_SECRET_KEY:}
+      webhook-secret: ${STRIPE_WEBHOOK_SECRET:}
+      currency: ${STRIPE_CURRENCY:USD}
+      redirect-base-url: ${STRIPE_REDIRECT_BASE_URL:}
+      session-timeout-seconds: ${STRIPE_SESSION_TIMEOUT_SECONDS:1800}
+    reservation:
+      cleanup:
+        enabled: ${RESERVATION_CLEANUP_ENABLED:true}
+        fixed-delay-ms: ${RESERVATION_CLEANUP_FIXED_DELAY_MS:60000}
 
 management:
   endpoints:
     web:
       exposure:
-        include: health,info
+        include: health,info,prometheus
   endpoint:
     health:
-      show-details: always
+      show-details: when-authorized
+      probes:
+        enabled: true
+      group:
+        liveness:
+          include: ping
+        readiness:
+          include: db
+
+logging:
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - [%X{correlationId}] - %msg%n"
