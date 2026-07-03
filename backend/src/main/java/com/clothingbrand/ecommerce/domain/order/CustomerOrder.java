@@ -24,6 +24,19 @@ public class CustomerOrder {
     @Column(nullable = false, length = 50)
     private OrderStatus status;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "payment_status", nullable = false, length = 50)
+    private PaymentStatus paymentStatus = PaymentStatus.NOT_APPLICABLE;
+
+    @Column(name = "stripe_session_id", unique = true, length = 255)
+    private String stripeSessionId;
+
+    @Column(name = "stripe_payment_intent_id", unique = true, length = 255)
+    private String stripePaymentIntentId;
+
+    @Column(name = "reservation_expires_at")
+    private OffsetDateTime reservationExpiresAt;
+
     @Column(nullable = false, precision = 12, scale = 2)
     private BigDecimal subtotal;
 
@@ -80,4 +93,16 @@ public class CustomerOrder {
 
     public List<OrderItem> getItems() { return items; }
     public void setItems(List<OrderItem> items) { this.items = items; }
+
+    public PaymentStatus getPaymentStatus() { return paymentStatus; }
+    public void setPaymentStatus(PaymentStatus paymentStatus) { this.paymentStatus = paymentStatus; }
+
+    public String getStripeSessionId() { return stripeSessionId; }
+    public void setStripeSessionId(String stripeSessionId) { this.stripeSessionId = stripeSessionId; }
+
+    public String getStripePaymentIntentId() { return stripePaymentIntentId; }
+    public void setStripePaymentIntentId(String stripePaymentIntentId) { this.stripePaymentIntentId = stripePaymentIntentId; }
+
+    public OffsetDateTime getReservationExpiresAt() { return reservationExpiresAt; }
+    public void setReservationExpiresAt(OffsetDateTime reservationExpiresAt) { this.reservationExpiresAt = reservationExpiresAt; }
 }

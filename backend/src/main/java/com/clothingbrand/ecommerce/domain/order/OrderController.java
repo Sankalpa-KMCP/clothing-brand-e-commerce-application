@@ -1,6 +1,7 @@
 package com.clothingbrand.ecommerce.domain.order;
 
 import com.clothingbrand.ecommerce.security.UserDetailsImpl;
+import com.clothingbrand.ecommerce.payment.StripeCheckoutCoordinator;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -18,9 +19,11 @@ import jakarta.validation.Valid;
 public class OrderController {
 
     private final OrderService orderService;
+    private final StripeCheckoutCoordinator stripeCheckoutCoordinator;
 
-    public OrderController(OrderService orderService) {
+    public OrderController(OrderService orderService, StripeCheckoutCoordinator stripeCheckoutCoordinator) {
         this.orderService = orderService;
+        this.stripeCheckoutCoordinator = stripeCheckoutCoordinator;
     }
 
     @PostMapping("/checkout")
@@ -29,6 +32,15 @@ public class OrderController {
             @Valid @RequestBody(required = false) CheckoutRequestDto request) {
         Long addressId = request != null ? request.addressId() : null;
         OrderResponseDto response = orderService.checkout(userDetails.getUser().getId(), addressId);
+        return new ResponseEntity<>(response, HttpStatus.CREATED);
+    }
+
+    @PostMapping("/checkout/reserve")
+    public ResponseEntity<StripeCheckoutResponseDto> reserveCheckoutSession(
+            @AuthenticationPrincipal UserDetailsImpl userDetails,
+            @Valid @RequestBody(required = false) CheckoutRequestDto request) throws Exception {
+        Long addressId = request != null ? request.addressId() : null;
+        StripeCheckoutResponseDto response = stripeCheckoutCoordinator.initiateCheckout(userDetails.getUser().getId(), addressId);
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
