@@ -17,6 +17,8 @@ async function clientNavigate(page: Page, path: string) {
 }
 
 test.beforeAll(async ({ request, browser }) => {
+  const rawBackendUrl = process.env.PLAYWRIGHT_BACKEND_URL || 'http://localhost:8080';
+  const backendUrl = rawBackendUrl.trim().replace(/\/+$/, '');
   const adminEmail = process.env.E2E_ADMIN_EMAIL;
   const adminPassword = process.env.E2E_ADMIN_PASSWORD;
 
@@ -28,7 +30,7 @@ test.beforeAll(async ({ request, browser }) => {
 
   // Preflight check: Actuator health check
   try {
-    const health = await request.get('http://localhost:8080/actuator/health');
+    const health = await request.get(`${backendUrl}/actuator/health`);
     if (!health.ok()) {
       throw new Error(`Actuator health status: ${health.status()}`);
     }
@@ -38,15 +40,15 @@ test.beforeAll(async ({ request, browser }) => {
     }
   } catch (error) {
     throw new Error(
-      `Preflight check failed: Backend/PostgreSQL is unreachable on port 8080. ` +
-      `Ensure you run: docker compose --env-file .env up -d AND start backend before running E2E tests.`
+      `Preflight check failed: Backend/PostgreSQL is unreachable at ${backendUrl}. ` +
+      `Ensure backend is running and healthy.`
     );
   }
 
   // Admin login to retrieve token
   let adminToken = '';
   try {
-    const loginRes = await request.post('http://localhost:8080/api/auth/login', {
+    const loginRes = await request.post(`${backendUrl}/api/auth/login`, {
       data: { email: adminEmail, password: adminPassword }
     });
     if (!loginRes.ok()) {
@@ -65,7 +67,7 @@ test.beforeAll(async ({ request, browser }) => {
   const sku = `SKU_E2E_${runId}`;
 
   // 1. Create Category
-  const catRes = await request.post('http://localhost:8080/api/admin/categories', {
+  const catRes = await request.post(`${backendUrl}/api/admin/categories`, {
     headers: { 'Authorization': `Bearer ${adminToken}` },
     data: {
       name: categoryName,
@@ -80,7 +82,7 @@ test.beforeAll(async ({ request, browser }) => {
   categoryId = categoryData.id;
 
   // 2. Create Product
-  const prodRes = await request.post('http://localhost:8080/api/admin/products', {
+  const prodRes = await request.post(`${backendUrl}/api/admin/products`, {
     headers: { 'Authorization': `Bearer ${adminToken}` },
     data: {
       name: productName,
@@ -97,7 +99,7 @@ test.beforeAll(async ({ request, browser }) => {
   const productId = productData.id;
 
   // 3. Create Variant
-  const varRes = await request.post(`http://localhost:8080/api/admin/products/${productId}/variants`, {
+  const varRes = await request.post(`${backendUrl}/api/admin/products/${productId}/variants`, {
     headers: { 'Authorization': `Bearer ${adminToken}` },
     data: {
       sku: sku,
@@ -113,7 +115,7 @@ test.beforeAll(async ({ request, browser }) => {
   const variantId = variantData.id;
 
   // 4. Adjust stock to 10
-  const stockRes = await request.patch(`http://localhost:8080/api/admin/products/${productId}/variants/${variantId}/stock`, {
+  const stockRes = await request.patch(`${backendUrl}/api/admin/products/${productId}/variants/${variantId}/stock`, {
     headers: { 'Authorization': `Bearer ${adminToken}` },
     data: {
       adjustment: 10

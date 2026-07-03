@@ -1,5 +1,10 @@
 import { defineConfig } from '@playwright/test';
 
+if (process.env.PLAYWRIGHT_BACKEND_URL) {
+  const backendUrl = process.env.PLAYWRIGHT_BACKEND_URL.trim().replace(/\/+$/, '');
+  process.env.VITE_API_BASE_URL = `${backendUrl}/api`;
+}
+
 const e2ePort = Number(process.env.PLAYWRIGHT_PORT || 5173);
 const e2eBaseURL = process.env.PLAYWRIGHT_BASE_URL || `http://localhost:${e2ePort}`;
 
@@ -38,5 +43,8 @@ export default defineConfig({
     port: e2ePort,
     reuseExistingServer: true,
     timeout: 30_000,
+    env: {
+      VITE_API_BASE_URL: process.env.VITE_API_BASE_URL || 'http://localhost:8080/api',
+    },
   },
 });

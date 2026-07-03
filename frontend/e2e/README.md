@@ -22,16 +22,24 @@ This directory contains automated local browser E2E tests built with Playwright.
 3. **Configure Playwright E2E Environment Variables**:
    You must set the E2E admin credentials as process-level environment variables so that Playwright can authenticate and seed test catalog data dynamically.
 
+   **Optional Backend URL Override**:
+   * `PLAYWRIGHT_BACKEND_URL` is optional and defaults exactly to `http://localhost:8080`.
+   * A trailing slash in the URL is fully accepted and automatically normalized.
+   * The isolated backend must allow the Playwright frontend origin through its CORS configuration (e.g. `CORS_ALLOWED_ORIGINS` must include the port/host where the E2E frontend runs).
+   * Ensure that no real external payment (Stripe), email, or storage providers are enabled for E2E testing to keep the run completely isolated.
+
    **On Windows (PowerShell)**:
    ```powershell
    $env:E2E_ADMIN_EMAIL="admin@example.com"
    $env:E2E_ADMIN_PASSWORD="your_secure_admin_password"
+   $env:PLAYWRIGHT_BACKEND_URL="http://localhost:8085/" # Optional override, trailing slash normalized
    ```
 
    **On Linux/macOS**:
    ```bash
    export E2E_ADMIN_EMAIL="admin@example.com"
    export E2E_ADMIN_PASSWORD="your_secure_admin_password"
+   export PLAYWRIGHT_BACKEND_URL="http://localhost:8085/" # Optional override, trailing slash normalized
    ```
 
 ## Running Tests
