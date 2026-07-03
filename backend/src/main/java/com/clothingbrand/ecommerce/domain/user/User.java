@@ -30,6 +30,15 @@ public class User {
     @Column(nullable = false)
     private Boolean active = true;
 
+    @Column(name = "email_verified_at")
+    private OffsetDateTime emailVerifiedAt;
+
+    @Column(name = "auth_version", nullable = false)
+    private Long authVersion = 0L;
+
+    @Column(name = "legacy_email_verification_exempt", nullable = false)
+    private Boolean legacyEmailVerificationExempt = false;
+
     @Column(name = "created_at", insertable = false, updatable = false)
     private OffsetDateTime createdAt;
 
@@ -90,6 +99,34 @@ public class User {
 
     public void setActive(Boolean active) {
         this.active = active;
+    }
+
+    public OffsetDateTime getEmailVerifiedAt() {
+        return emailVerifiedAt;
+    }
+
+    public void setEmailVerifiedAt(OffsetDateTime emailVerifiedAt) {
+        this.emailVerifiedAt = emailVerifiedAt;
+    }
+
+    public Long getAuthVersion() {
+        return authVersion;
+    }
+
+    public void setAuthVersion(Long authVersion) {
+        this.authVersion = authVersion;
+    }
+
+    public Boolean getLegacyEmailVerificationExempt() {
+        return legacyEmailVerificationExempt;
+    }
+
+    public void setLegacyEmailVerificationExempt(Boolean legacyEmailVerificationExempt) {
+        this.legacyEmailVerificationExempt = legacyEmailVerificationExempt;
+    }
+
+    public void incrementAuthVersion() {
+        this.authVersion = this.authVersion == null ? 1L : this.authVersion + 1L;
     }
 
     public OffsetDateTime getCreatedAt() {

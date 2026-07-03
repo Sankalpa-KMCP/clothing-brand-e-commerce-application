@@ -4,6 +4,7 @@ import com.clothingbrand.ecommerce.exception.DuplicateResourceException;
 import com.clothingbrand.ecommerce.exception.InvalidCredentialsException;
 import com.clothingbrand.ecommerce.exception.InvalidRefreshTokenException;
 import com.clothingbrand.ecommerce.exception.ResourceNotFoundException;
+import com.clothingbrand.ecommerce.config.AccountSecurityProperties;
 import com.clothingbrand.ecommerce.security.JwtProperties;
 import com.clothingbrand.ecommerce.security.JwtService;
 import com.clothingbrand.ecommerce.security.UserDetailsImpl;
@@ -22,14 +23,31 @@ public class AuthService {
     private final JwtService jwtService;
     private final JwtProperties jwtProperties;
     private final RefreshTokenService refreshTokenService;
+    private final EmailVerificationService emailVerificationService;
+    private final PasswordResetService passwordResetService;
+    private final AccountSecurityProperties accountProperties;
+    private final com.clothingbrand.ecommerce.config.ObservabilityService observabilityService;
 
-    public AuthService(UserRepository userRepository, RoleRepository roleRepository, PasswordEncoder passwordEncoder, JwtService jwtService, JwtProperties jwtProperties, RefreshTokenService refreshTokenService) {
+    public AuthService(UserRepository userRepository,
+                       RoleRepository roleRepository,
+                       PasswordEncoder passwordEncoder,
+                       JwtService jwtService,
+                       JwtProperties jwtProperties,
+                       RefreshTokenService refreshTokenService,
+                       EmailVerificationService emailVerificationService,
+                       PasswordResetService passwordResetService,
+                       AccountSecurityProperties accountProperties,
+                       com.clothingbrand.ecommerce.config.ObservabilityService observabilityService) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
         this.jwtProperties = jwtProperties;
         this.refreshTokenService = refreshTokenService;
+        this.emailVerificationService = emailVerificationService;
+        this.passwordResetService = passwordResetService;
+        this.accountProperties = accountProperties;
+        this.observabilityService = observabilityService;
     }
 
     @Transactional
@@ -50,6 +68,7 @@ public class AuthService {
         user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
         user.setRole(customerRole);
         user.setActive(true);
+        user.setLegacyEmailVerificationExempt(false);
 
         try {
             user = userRepository.saveAndFlush(user);
@@ -62,6 +81,12 @@ public class AuthService {
             throw e;
         }
 
+        emailVerificationService.issueVerification(user);
+
+        if (accountProperties.getEmailVerification().isRequired() && !emailVerificationService.isSatisfied(user)) {
+            return new VerificationRequiredResponseDto(mapToUserDto(user));
+        }
+
         return getAuthResponse(user);
     }
 
@@ -69,18 +94,28 @@ public class AuthService {
     public AuthResponseDto login(LoginRequestDto request) {
         String normalizedEmail = request.getEmail().trim().toLowerCase();
 
-        User user = userRepository.findByEmail(normalizedEmail)
-                .orElseThrow(() -> new InvalidCredentialsException("Invalid email or password"));
+        try {
+            User user = userRepository.findByEmail(normalizedEmail)
+                    .orElseThrow(() -> new InvalidCredentialsException("Invalid email or password"));
 
-        if (!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
-            throw new InvalidCredentialsException("Invalid email or password");
+            if (!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
+                throw new InvalidCredentialsException("Invalid email or password");
+            }
+
+            if (!user.getActive()) {
+                throw new InvalidCredentialsException("Invalid email or password");
+            }
+
+            if (accountProperties.getEmailVerification().isRequired() && !emailVerificationService.isSatisfied(user)) {
+                throw new InvalidCredentialsException("Invalid email or password");
+            }
+
+            observabilityService.trackLoginSuccess();
+            return getAuthResponse(user);
+        } catch (InvalidCredentialsException ex) {
+            observabilityService.trackLoginFailure();
+            throw ex;
         }
-
-        if (!user.getActive()) {
-            throw new InvalidCredentialsException("Invalid email or password");
-        }
-
-        return getAuthResponse(user);
     }
 
     public UserDto mapToUserDto(User user) {
@@ -90,6 +125,7 @@ public class AuthService {
         dto.setFirstName(user.getFirstName());
         dto.setLastName(user.getLastName());
         dto.setRole(user.getRole().getName().name());
+        dto.setEmailVerified(emailVerificationService.isSatisfied(user));
         return dto;
     }
 
@@ -120,5 +156,25 @@ public class AuthService {
     @Transactional
     public void logout(LogoutRequestDto request) {
         refreshTokenService.revokeToken(request.getRefreshToken());
+    }
+
+    @Transactional
+    public void resendVerification(EmailRequestDto request) {
+        emailVerificationService.resend(request.getEmail());
+    }
+
+    @Transactional
+    public boolean verifyEmail(TokenRequestDto request) {
+        return emailVerificationService.verify(request.getToken());
+    }
+
+    @Transactional
+    public void forgotPassword(EmailRequestDto request) {
+        passwordResetService.requestReset(request.getEmail());
+    }
+
+    @Transactional
+    public void resetPassword(ResetPasswordRequestDto request) {
+        passwordResetService.resetPassword(request.getToken(), request.getPassword());
     }
 }

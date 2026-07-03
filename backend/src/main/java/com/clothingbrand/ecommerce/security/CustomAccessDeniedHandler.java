@@ -27,11 +27,20 @@ public class CustomAccessDeniedHandler implements AccessDeniedHandler {
         response.setStatus(HttpServletResponse.SC_FORBIDDEN);
         response.setCharacterEncoding("UTF-8");
 
+        String correlationId = org.slf4j.MDC.get("correlationId");
+        if (correlationId == null || correlationId.isBlank()) {
+            correlationId = (String) request.getAttribute("correlationId");
+            if (correlationId == null || correlationId.isBlank()) {
+                correlationId = java.util.UUID.randomUUID().toString();
+            }
+        }
+
         ErrorResponse error = new ErrorResponse(
                 HttpServletResponse.SC_FORBIDDEN,
                 "Forbidden",
                 "You do not have permission to access this resource",
-                LocalDateTime.now()
+                LocalDateTime.now(),
+                correlationId
         );
 
         objectMapper.writeValue(response.getWriter(), error);

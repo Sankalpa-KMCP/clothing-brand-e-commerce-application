@@ -6,6 +6,7 @@ public class UserDto {
     private String firstName;
     private String lastName;
     private String role;
+    private boolean emailVerified;
 
     public Long getId() {
         return id;
@@ -45,5 +46,13 @@ public class UserDto {
 
     public void setRole(String role) {
         this.role = role;
+    }
+
+    public boolean isEmailVerified() {
+        return emailVerified;
+    }
+
+    public void setEmailVerified(boolean emailVerified) {
+        this.emailVerified = emailVerified;
     }
 }

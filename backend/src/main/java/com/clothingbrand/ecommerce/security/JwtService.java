@@ -27,6 +27,7 @@ public class JwtService {
                 .setSubject(userDetails.getUsername())
                 .claim("userId", userDetails.getUser().getId())
                 .claim("role", userDetails.getUser().getRole().getName().name())
+                .claim("authVersion", userDetails.getUser().getAuthVersion() == null ? 0L : userDetails.getUser().getAuthVersion())
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + jwtProperties.getExpirationMs()))
                 .signWith(key, SignatureAlgorithm.HS256)
@@ -44,6 +45,14 @@ public class JwtService {
         } catch (JwtException | IllegalArgumentException e) {
             return false;
         }
+    }
+
+    public Long extractAuthVersion(String token) {
+        Object value = getClaims(token).get("authVersion");
+        if (value instanceof Number number) {
+            return number.longValue();
+        }
+        return 0L;
     }
 
     private Claims getClaims(String token) {

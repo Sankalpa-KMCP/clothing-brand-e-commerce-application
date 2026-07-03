@@ -27,11 +27,20 @@ public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint 
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         response.setCharacterEncoding("UTF-8");
 
+        String correlationId = org.slf4j.MDC.get("correlationId");
+        if (correlationId == null || correlationId.isBlank()) {
+            correlationId = (String) request.getAttribute("correlationId");
+            if (correlationId == null || correlationId.isBlank()) {
+                correlationId = java.util.UUID.randomUUID().toString();
+            }
+        }
+
         ErrorResponse error = new ErrorResponse(
                 HttpServletResponse.SC_UNAUTHORIZED,
                 "Unauthorized",
                 "Authentication is required to access this resource",
-                LocalDateTime.now()
+                LocalDateTime.now(),
+                correlationId
         );
 
         objectMapper.writeValue(response.getWriter(), error);
