@@ -37,27 +37,56 @@ const Footer: React.FC = () => {
   return (
     <footer style={{
       borderTop: '1px solid var(--border)',
-      backgroundColor: 'var(--bg-card)',
-      padding: '48px 0',
+      backgroundColor: 'var(--bg-primary)',
+      padding: '80px 0 40px',
       color: 'var(--text-secondary)',
       fontSize: '0.8125rem',
       letterSpacing: '0.03em',
-      transition: 'background-color var(--transition-normal), border-color var(--transition-normal)'
     }}>
-      <div className="container" style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        flexWrap: 'wrap',
-        gap: '24px'
-      }}>
-        <div style={{ textTransform: 'uppercase', fontWeight: 500, color: 'var(--text-muted)' }}>
-          &copy; {new Date().getFullYear()} THREAD & Co.
+      <div className="container">
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '60px', marginBottom: '80px' }}>
+          <div>
+            <h4 style={{ fontFamily: 'var(--font-title)', color: 'var(--text-primary)', marginBottom: '24px', fontSize: '1rem', fontWeight: 600, letterSpacing: '0.1em' }}>VÉLURE</h4>
+            <p style={{ lineHeight: 1.8, marginBottom: '24px' }}>
+              Defining modern elegance through sustainable craftsmanship and timeless design.
+            </p>
+          </div>
+          <div>
+            <h4 style={{ color: 'var(--text-primary)', marginBottom: '24px', fontSize: '0.85rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em' }}>Shop</h4>
+            <ul style={{ listStyle: 'none', padding: 0, display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <li><Link to="/catalog?categoryId=1001" style={{ transition: 'color var(--transition-fast)' }} onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--accent)')} onMouseLeave={(e) => (e.currentTarget.style.color = 'inherit')}>Premium Denim</Link></li>
+              <li><Link to="/catalog?categoryId=1002" style={{ transition: 'color var(--transition-fast)' }} onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--accent)')} onMouseLeave={(e) => (e.currentTarget.style.color = 'inherit')}>Essential Knits</Link></li>
+              <li><Link to="/catalog?categoryId=1003" style={{ transition: 'color var(--transition-fast)' }} onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--accent)')} onMouseLeave={(e) => (e.currentTarget.style.color = 'inherit')}>Outerwear</Link></li>
+              <li><Link to="/catalog?categoryId=1004" style={{ transition: 'color var(--transition-fast)' }} onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--accent)')} onMouseLeave={(e) => (e.currentTarget.style.color = 'inherit')}>Accessories</Link></li>
+            </ul>
+          </div>
+          <div>
+            <h4 style={{ color: 'var(--text-primary)', marginBottom: '24px', fontSize: '0.85rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em' }}>Customer Care</h4>
+            <ul style={{ listStyle: 'none', padding: 0, display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <li><a href="#contact" style={{ transition: 'color var(--transition-fast)' }} onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--accent)')} onMouseLeave={(e) => (e.currentTarget.style.color = 'inherit')}>Contact Us</a></li>
+              <li><a href="#shipping" style={{ transition: 'color var(--transition-fast)' }} onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--accent)')} onMouseLeave={(e) => (e.currentTarget.style.color = 'inherit')}>Shipping & Returns</a></li>
+              <li><a href="#faq" style={{ transition: 'color var(--transition-fast)' }} onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--accent)')} onMouseLeave={(e) => (e.currentTarget.style.color = 'inherit')}>FAQ</a></li>
+              <li><a href="#sizing" style={{ transition: 'color var(--transition-fast)' }} onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--accent)')} onMouseLeave={(e) => (e.currentTarget.style.color = 'inherit')}>Sizing Guide</a></li>
+            </ul>
+          </div>
+          <div>
+            <h4 style={{ color: 'var(--text-primary)', marginBottom: '24px', fontSize: '0.85rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em' }}>Legal</h4>
+            <ul style={{ listStyle: 'none', padding: 0, display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <li><a href="#terms" style={{ transition: 'color var(--transition-fast)' }} onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--accent)')} onMouseLeave={(e) => (e.currentTarget.style.color = 'inherit')}>Terms of Service</a></li>
+              <li><a href="#privacy" style={{ transition: 'color var(--transition-fast)' }} onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--accent)')} onMouseLeave={(e) => (e.currentTarget.style.color = 'inherit')}>Privacy Policy</a></li>
+              <li><a href="#cookies" style={{ transition: 'color var(--transition-fast)' }} onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--accent)')} onMouseLeave={(e) => (e.currentTarget.style.color = 'inherit')}>Cookie Policy</a></li>
+            </ul>
+          </div>
         </div>
-        <div style={{ display: 'flex', gap: '32px', textTransform: 'uppercase' }}>
-          <Link to="/catalog" style={{ transition: 'color var(--transition-fast)' }} onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--accent)')} onMouseLeave={(e) => (e.currentTarget.style.color = 'inherit')}>Shop Collection</Link>
-          <a href="#terms" style={{ transition: 'color var(--transition-fast)' }} onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--accent)')} onMouseLeave={(e) => (e.currentTarget.style.color = 'inherit')}>Terms</a>
-          <a href="#privacy" style={{ transition: 'color var(--transition-fast)' }} onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--accent)')} onMouseLeave={(e) => (e.currentTarget.style.color = 'inherit')}>Privacy Policy</a>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '24px', paddingTop: '40px', borderTop: '1px solid var(--border)' }}>
+          <div style={{ textTransform: 'uppercase', fontWeight: 500, color: 'var(--text-muted)', fontSize: '0.75rem' }}>
+            &copy; {new Date().getFullYear()} VÉLURE. All rights reserved.
+          </div>
+          <div style={{ display: 'flex', gap: '24px' }}>
+            <a href="#ig" style={{ color: 'var(--text-primary)' }}>Instagram</a>
+            <a href="#tw" style={{ color: 'var(--text-primary)' }}>Twitter</a>
+            <a href="#pt" style={{ color: 'var(--text-primary)' }}>Pinterest</a>
+          </div>
         </div>
       </div>
     </footer>

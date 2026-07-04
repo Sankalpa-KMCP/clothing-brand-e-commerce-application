@@ -109,6 +109,24 @@ export const ProductDetail: React.FC = () => {
     product.variants[0]?.price || 0
   );
 
+  const getColorHex = (colorName: string) => {
+    const colorsMap: Record<string, string> = {
+      indigo: '#3f51b5',
+      charcoal: '#37474f',
+      navy: '#1a237e',
+      black: '#1c1917',
+      white: '#ffffff',
+      grey: '#8e8a86',
+      gray: '#8e8a86',
+      bronze: '#8c6239',
+      beige: '#f4f2ec',
+      red: '#991b1b',
+      blue: '#1e3a8a',
+      green: '#115e59'
+    };
+    return colorsMap[colorName.toLowerCase()] || '#8e8a86';
+  };
+
   const handleAddToBag = async () => {
     if (!isAuthenticated) {
       navigate('/login');
@@ -130,77 +148,80 @@ export const ProductDetail: React.FC = () => {
   };
 
   return (
-    <div className="product-detail-page container animate-fade-in">
-      <Link to="/catalog" className="editorial-text-link" style={{ marginBottom: '32px' }}>
-        <ArrowLeft size={16} style={{ marginRight: '8px' }} />
-        <span>Back to Catalog</span>
-      </Link>
-
-      <div className="product-detail-grid">
+    <div className="product-detail-page animate-fade-in" style={{ padding: 0 }}>
+      <div style={{ display: 'flex', height: 'calc(100vh - 80px)', width: '100%' }}>
         {/* Left Side: Product Image */}
-        <div className="product-detail-media-container">
+        <div style={{ flex: '1.2', position: 'relative', backgroundColor: 'var(--bg-secondary)', overflow: 'hidden' }}>
           <EditorialMedia
             src={product.imageUrl}
             alt={product.name}
             label={product.name}
+            style={{ height: '100%', width: '100%', objectFit: 'cover', border: 'none' }}
           />
         </div>
 
         {/* Right Side: Product Details & Variant Picker */}
-        <div className="product-detail-info">
+        <div style={{ flex: '1', padding: '60px 80px', overflowY: 'auto', backgroundColor: 'var(--bg-primary)' }}>
+          <Link to="/catalog" className="editorial-text-link" style={{ marginBottom: '40px', display: 'inline-flex' }}>
+            <ArrowLeft size={16} style={{ marginRight: '8px' }} />
+            <span>Back to Catalog</span>
+          </Link>
+
           <div>
-            <span className="product-detail-kicker">
+            <span className="product-detail-kicker" style={{ fontSize: '0.85rem' }}>
               {product.category?.name}
             </span>
-            <h1 className="product-detail-title">
+            <h1 className="product-detail-title" style={{ fontSize: '3.5rem', marginTop: '16px', marginBottom: '24px' }}>
               {product.name}
             </h1>
             
             {/* Price display */}
-            <div className="product-detail-price-block">
-              <span className="product-detail-price">
-                {selectedVariant ? `$${selectedVariant.price.toFixed(2)}` : `$${startingPrice.toFixed(2)}`}
+            <div className="product-detail-price-block" style={{ marginBottom: '24px' }}>
+              <span className="product-detail-price" style={{ fontSize: '2.5rem' }}>
+                {selectedVariant ? `LKR ${selectedVariant.price.toFixed(2)}` : `LKR ${startingPrice.toFixed(2)}`}
               </span>
               {!selectedVariant && (
-                <span className="product-detail-starting">starting price</span>
+                <span className="product-detail-starting" style={{ marginLeft: '12px' }}>starting price</span>
               )}
             </div>
 
             {/* In Stock Badge */}
-            {selectedVariant ? (
-              selectedVariant.inStock ? (
-                <span className="product-detail-stock-badge product-detail-stock-in">
-                  <CheckCircle2 size={14} />
-                  <span>In Stock</span>
-                </span>
+            <div style={{ marginBottom: '40px' }}>
+              {selectedVariant ? (
+                selectedVariant.inStock ? (
+                  <span className="product-detail-stock-badge product-detail-stock-in" style={{ padding: '8px 16px', borderRadius: '0' }}>
+                    <CheckCircle2 size={16} />
+                    <span>In Stock - Ready to Ship</span>
+                  </span>
+                ) : (
+                  <span className="product-detail-stock-badge product-detail-stock-out" style={{ padding: '8px 16px', borderRadius: '0' }}>
+                    <XCircle size={16} />
+                    <span>Out of Stock</span>
+                  </span>
+                )
               ) : (
-                <span className="product-detail-stock-badge product-detail-stock-out">
-                  <XCircle size={14} />
-                  <span>Out of Stock</span>
+                <span className="product-detail-stock-prompt" style={{ fontStyle: 'normal', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
+                  Select options below to view availability
                 </span>
-              )
-            ) : (
-              <span className="product-detail-stock-prompt">
-                Select options below to view availability
-              </span>
-            )}
+              )}
+            </div>
           </div>
 
-          <hr className="product-detail-divider" />
+          <hr className="product-detail-divider" style={{ margin: '40px 0' }} />
 
           {/* Description */}
-          <div className="product-detail-description">
-            <h3>Description</h3>
-            <p>{product.description || 'No description provided for this product.'}</p>
+          <div className="product-detail-description" style={{ marginBottom: '40px' }}>
+            <h3 style={{ fontSize: '1.2rem', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '16px' }}>Details</h3>
+            <p style={{ fontSize: '1.05rem', lineHeight: '1.8' }}>{product.description || 'No description provided for this product.'}</p>
           </div>
 
           {/* Option selectors */}
           {product.variants.length > 0 && (
-            <div className="product-detail-selectors">
+            <div className="product-detail-selectors" style={{ gap: '32px' }}>
               {/* Color Picker */}
               <div className="product-detail-selector-group">
-                <h4>
-                  Color: <span>{selectedColor}</span>
+                <h4 style={{ marginBottom: '16px' }}>
+                  Color: <span style={{ textTransform: 'capitalize' }}>{selectedColor.toLowerCase()}</span>
                 </h4>
                 <div className="product-detail-options">
                   {colors.map((color) => {
@@ -209,7 +230,11 @@ export const ProductDetail: React.FC = () => {
                       <button
                         key={color}
                         onClick={() => setSelectedColor(color)}
-                        className={`product-detail-option-btn ${isSelected ? 'is-selected' : ''}`}
+                        className={`swatch-color-btn ${isSelected ? 'is-selected' : ''}`}
+                        style={{ backgroundColor: getColorHex(color), width: '40px', height: '40px', borderRadius: '50%' }}
+                        title={color}
+                        aria-label={`Select Color: ${color}`}
+                        aria-pressed={isSelected}
                       >
                         {color}
                       </button>
@@ -220,10 +245,10 @@ export const ProductDetail: React.FC = () => {
 
               {/* Size Picker */}
               <div className="product-detail-selector-group">
-                <h4>
+                <h4 style={{ marginBottom: '16px' }}>
                   Size: <span>{selectedSize}</span>
                 </h4>
-                <div className="product-detail-options">
+                <div className="product-detail-options" style={{ gap: '16px' }}>
                   {sizes.map((size) => {
                     const isSelected = selectedSize === size;
                     // Check if this specific size is available in currently selected color
@@ -236,6 +261,7 @@ export const ProductDetail: React.FC = () => {
                         disabled={!hasVariant}
                         onClick={() => setSelectedSize(size)}
                         className={`product-detail-option-btn ${isSelected ? 'is-selected' : ''}`}
+                        style={{ padding: '16px 24px', fontSize: '1rem', border: '1px solid var(--border)', borderRadius: '0' }}
                       >
                         {size}
                       </button>
@@ -248,26 +274,27 @@ export const ProductDetail: React.FC = () => {
 
           {/* Add to Bag Feedback Alerts */}
           {addError && (
-            <div className="alert alert-error animate-fade-in" style={{ marginTop: '32px' }}>
-              <AlertCircle size={16} />
+            <div className="alert alert-error animate-fade-in" style={{ marginTop: '40px', borderRadius: '0' }}>
+              <AlertCircle size={18} />
               <span>{addError}</span>
             </div>
           )}
           {addSuccess && (
-            <div className="alert alert-success animate-fade-in" style={{ marginTop: '32px' }}>
-              <Check size={16} />
+            <div className="alert alert-success animate-fade-in" style={{ marginTop: '40px', borderRadius: '0' }}>
+              <Check size={18} />
               <span>Added to bag successfully!</span>
             </div>
           )}
 
           {/* Add to Bag Button */}
-          <div className="product-detail-actions">
+          <div className="product-detail-actions" style={{ marginTop: '56px' }}>
             <button
               disabled={!selectedVariant || !selectedVariant.inStock || isAdding}
               className="btn btn-primary"
               onClick={handleAddToBag}
+              style={{ padding: '24px', fontSize: '1.1rem', letterSpacing: '0.1em', borderRadius: '0' }}
             >
-              <ShoppingBag size={18} style={{ marginRight: '8px' }} />
+              <ShoppingBag size={20} style={{ marginRight: '12px' }} />
               <span>{isAdding ? 'Adding to Bag...' : 'Add to Bag'}</span>
             </button>
           </div>

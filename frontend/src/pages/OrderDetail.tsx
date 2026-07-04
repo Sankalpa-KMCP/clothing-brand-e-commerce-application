@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { orderApi, type OrderDetailResponseDto } from '../api/orderApi';
 import { useCart } from '../context/CartContext';
 import { Package, AlertCircle, ChevronLeft, MapPin, Clock, XCircle } from 'lucide-react';
+import { EditorialMedia } from '../components/EditorialMedia';
 
 export const OrderDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -60,68 +61,80 @@ export const OrderDetail: React.FC = () => {
     }
   };
 
-  const getStatusColor = (status: string) => {
+  const getStatusClass = (status: string) => {
     switch (status) {
-      case 'PLACED': return { bg: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6' };
-      case 'PROCESSING': return { bg: 'rgba(168, 85, 247, 0.1)', color: '#a855f7' };
-      case 'SHIPPED': return { bg: 'rgba(234, 179, 8, 0.1)', color: '#eab308' };
-      case 'DELIVERED': return { bg: 'rgba(34, 197, 94, 0.1)', color: '#22c55e' };
-      case 'CANCELLED': return { bg: 'rgba(239, 68, 68, 0.1)', color: '#ef4444' };
-      default: return { bg: 'rgba(107, 114, 128, 0.1)', color: '#6b7280' };
+      case 'DELIVERED':
+      case 'SHIPPED':
+        return 'status-badge-premium status-badge-completed';
+      case 'CANCELLED':
+        return 'status-badge-premium status-badge-cancelled';
+      default:
+        return 'status-badge-premium status-badge-pending';
     }
   };
 
   if (loading && !order) {
     return (
-      <div className="container" style={{ padding: '60px 0', textAlign: 'center' }}>
-        <p>Loading order details...</p>
+      <div className="flex-center" style={{ height: '400px' }}>
+        <div style={{
+          border: '4px solid var(--border)',
+          borderTopColor: 'var(--accent)',
+          borderRadius: 'var(--radius-full)',
+          width: '40px',
+          height: '40px',
+          animation: 'spin 1s linear infinite'
+        }} />
+        <style>{`
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+        `}</style>
       </div>
     );
   }
 
   if (error && !order) {
     return (
-      <div className="container" style={{ padding: '60px 0', textAlign: 'center' }}>
-        <AlertCircle size={48} style={{ color: 'var(--error)', margin: '0 auto 16px' }} />
-        <h2 style={{ marginBottom: '8px' }}>Oops!</h2>
-        <p style={{ color: 'var(--text-secondary)', marginBottom: '24px' }}>
-          {error}
-        </p>
-        <Link to="/orders" className="btn btn-primary">Back to Orders</Link>
+      <div className="container animate-fade-in" style={{ padding: '80px 20px', textAlign: 'center' }}>
+        <div style={{
+          maxWidth: '500px',
+          margin: '0 auto',
+          padding: '60px 40px',
+          backgroundColor: 'var(--bg-card)',
+          borderRadius: 'var(--radius-lg)',
+          border: '1px solid var(--border)'
+        }}>
+          <AlertCircle size={48} style={{ color: 'var(--error)', marginBottom: '20px' }} />
+          <h2 className="title-small" style={{ marginBottom: '8px' }}>Oops!</h2>
+          <p style={{ color: 'var(--text-secondary)', marginBottom: '24px' }}>
+            {error}
+          </p>
+          <Link to="/orders" className="btn btn-primary">Back to Orders</Link>
+        </div>
       </div>
     );
   }
 
   if (!order) return null;
 
-  const statusColors = getStatusColor(order.status);
-
   return (
-    <div className="container" style={{ padding: '40px 0' }}>
-      <Link to="/orders" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', color: 'var(--text-secondary)', marginBottom: '24px', textDecoration: 'none' }}
-            onMouseEnter={(e) => e.currentTarget.style.color = 'var(--accent)'}
-            onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-secondary)'}>
+    <div className="container animate-fade-in" style={{ padding: '40px 20px 80px 20px' }}>
+      <Link to="/orders" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', color: 'var(--text-secondary)', marginBottom: '24px', textDecoration: 'none', fontSize: '0.875rem' }}
+            className="editorial-text-link">
         <ChevronLeft size={16} />
         Back to Orders
       </Link>
 
-      <div className="flex-between" style={{ alignItems: 'flex-start', marginBottom: '32px' }}>
+      <div className="flex-between" style={{ alignItems: 'flex-start', marginBottom: '32px', flexWrap: 'wrap', gap: '16px' }}>
         <div>
-          <h1 style={{ fontFamily: 'var(--font-title)', display: 'flex', alignItems: 'center', gap: '12px' }}>
-            Order #{order.id}
-            <span style={{
-              backgroundColor: statusColors.bg,
-              color: statusColors.color,
-              padding: '6px 12px',
-              borderRadius: '20px',
-              fontSize: '0.875rem',
-              fontWeight: 600,
-              fontFamily: 'var(--font-body)'
-            }}>
+          <h1 className="title-medium" style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
+            <span>Order #{order.id}</span>
+            <span className={getStatusClass(order.status)}>
               {order.status}
             </span>
           </h1>
-          <p style={{ color: 'var(--text-secondary)', marginTop: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <p style={{ color: 'var(--text-secondary)', marginTop: '8px', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.875rem' }}>
             <Clock size={16} />
             Placed on {new Date(order.createdAt).toLocaleString()}
           </p>
@@ -131,13 +144,13 @@ export const OrderDetail: React.FC = () => {
           <button 
             className="btn" 
             style={{ 
-              backgroundColor: 'rgba(239, 68, 68, 0.1)', 
-              color: '#ef4444', 
-              border: 'none', 
+              backgroundColor: 'var(--error-bg)', 
+              color: 'var(--error)', 
+              border: '1px solid var(--error)', 
               display: 'flex', 
               alignItems: 'center', 
               gap: '6px',
-              padding: '8px 16px',
+              padding: '10px 20px',
               fontWeight: 600
             }}
             onClick={handleCancel}
@@ -150,49 +163,43 @@ export const OrderDetail: React.FC = () => {
       </div>
 
       {error && order && (
-        <div style={{
-          backgroundColor: 'rgba(239, 68, 68, 0.1)',
-          color: 'var(--error)',
-          padding: '16px',
-          borderRadius: '8px',
-          marginBottom: '24px',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '12px'
-        }}>
+        <div className="alert alert-error animate-fade-in" style={{ marginBottom: '30px' }}>
           <AlertCircle size={20} />
           <span>{error}</span>
         </div>
       )}
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 380px', gap: '32px', alignItems: 'start' }}>
+      <div className="grid grid-3" style={{ gap: '60px', alignItems: 'start' }}>
         
         {/* Left Column: Items & History */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-          <div className="card" style={{ padding: '24px' }}>
-            <h2 style={{ fontSize: '1.25rem', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <Package size={20} />
+        <div style={{ gridColumn: 'span 2', display: 'flex', flexDirection: 'column', gap: '48px' }}>
+          <div>
+            <h2 style={{ fontFamily: 'var(--font-title)', fontSize: '1.8rem', fontWeight: 400, marginBottom: '32px', letterSpacing: '0.02em', display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <Package size={24} style={{ color: 'var(--text-primary)' }} />
               Items Ordered
             </h2>
             
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
               {order.items.map((item, idx) => (
-                <div key={idx} style={{ display: 'flex', gap: '16px', paddingBottom: idx !== order.items.length - 1 ? '20px' : '0', borderBottom: idx !== order.items.length - 1 ? '1px solid var(--border)' : 'none' }}>
-                  <img 
-                    src={item.productImageUrl} 
-                    alt={item.productName} 
-                    style={{ width: '80px', height: '100px', objectFit: 'cover', borderRadius: '4px' }}
-                  />
-                  <div style={{ flex: 1 }}>
-                    <div className="flex-between" style={{ alignItems: 'flex-start', marginBottom: '4px' }}>
-                      <div style={{ fontWeight: 600, fontSize: '1rem' }}>{item.productName}</div>
-                      <div style={{ fontWeight: 600 }}>${item.lineTotal.toFixed(2)}</div>
+                <div key={idx} style={{ display: 'flex', gap: '24px', paddingBottom: '32px', borderBottom: idx !== order.items.length - 1 ? '1px solid var(--border)' : 'none', alignItems: 'flex-start' }}>
+                  <div style={{ width: '100px', flexShrink: 0 }}>
+                    <EditorialMedia
+                      src={item.productImageUrl}
+                      alt={item.productName}
+                      label={item.productName}
+                      style={{ height: '140px', border: 'none' }}
+                    />
+                  </div>
+                  <div style={{ flex: 1, paddingTop: '4px' }}>
+                    <div className="flex-between" style={{ alignItems: 'flex-start', marginBottom: '8px' }}>
+                      <div style={{ fontWeight: 400, fontFamily: 'var(--font-title)', fontSize: '1.2rem', letterSpacing: '0.02em' }}>{item.productName}</div>
+                      <div style={{ fontWeight: 400, fontSize: '1.2rem' }}>LKR {item.lineTotal.toFixed(2)}</div>
                     </div>
-                    <div style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', marginBottom: '4px' }}>
-                      {item.color} | {item.size}
+                    <div style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '16px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                      {item.color} / {item.size}
                     </div>
-                    <div style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
-                      Qty: {item.quantity} × ${item.unitPrice.toFixed(2)}
+                    <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>
+                      Qty: {item.quantity} &times; LKR {item.unitPrice.toFixed(2)}
                     </div>
                   </div>
                 </div>
@@ -200,25 +207,27 @@ export const OrderDetail: React.FC = () => {
             </div>
           </div>
 
+          <hr style={{ border: 'none', borderTop: '1px solid var(--border)' }} />
+
           {order.statusHistory && order.statusHistory.length > 0 && (
-            <div className="card" style={{ padding: '24px' }}>
-              <h2 style={{ fontSize: '1.25rem', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Clock size={20} />
+            <div>
+              <h2 style={{ fontFamily: 'var(--font-title)', fontSize: '1.8rem', fontWeight: 400, marginBottom: '32px', letterSpacing: '0.02em', display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <Clock size={24} style={{ color: 'var(--text-primary)' }} />
                 Order History
               </h2>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
                 {order.statusHistory.map((history, idx) => (
-                  <div key={idx} style={{ display: 'flex', gap: '12px' }}>
+                  <div key={idx} style={{ display: 'flex', gap: '20px' }}>
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                      <div style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: 'var(--accent)', marginTop: '6px' }} />
-                      {idx !== order.statusHistory.length - 1 && <div style={{ width: '2px', flex: 1, backgroundColor: 'var(--border)', marginTop: '4px', marginBottom: '4px' }} />}
+                      <div style={{ width: '12px', height: '12px', borderRadius: '50%', backgroundColor: 'var(--text-primary)', marginTop: '4px' }} />
+                      {idx !== order.statusHistory.length - 1 && <div style={{ width: '1px', flex: 1, backgroundColor: 'var(--border)', marginTop: '8px', marginBottom: '4px' }} />}
                     </div>
                     <div style={{ paddingBottom: '16px' }}>
-                      <div style={{ fontWeight: 500 }}>
+                      <div style={{ fontWeight: 600, fontSize: '1rem', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '4px' }}>
                         {history.previousStatus ? `${history.previousStatus} → ` : ''}
                         {history.newStatus}
                       </div>
-                      <div style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', marginTop: '4px' }}>
+                      <div style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
                         {new Date(history.createdAt).toLocaleString()} by {history.actorType}
                       </div>
                     </div>
@@ -230,14 +239,14 @@ export const OrderDetail: React.FC = () => {
         </div>
 
         {/* Right Column: Address & Summary */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-          <div className="card" style={{ padding: '24px' }}>
-            <h2 style={{ fontSize: '1.125rem', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <MapPin size={18} />
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '32px', position: 'sticky', top: '40px' }}>
+          <div style={{ padding: '32px', border: '1px solid var(--border)', backgroundColor: 'var(--bg-secondary)' }}>
+            <h2 style={{ fontFamily: 'var(--font-title)', fontSize: '1.5rem', fontWeight: 400, marginBottom: '24px', letterSpacing: '0.02em', display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <MapPin size={20} style={{ color: 'var(--text-primary)' }} />
               Delivery Address
             </h2>
-            <div style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', lineHeight: 1.6 }}>
-              <div style={{ fontWeight: 600, color: 'var(--text)', marginBottom: '4px' }}>
+            <div style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', lineHeight: 1.6 }}>
+              <div style={{ fontWeight: 600, color: 'var(--text-primary)', marginBottom: '8px', fontSize: '1rem' }}>
                 {order.deliveryAddress.recipientName}
               </div>
               {order.deliveryAddress.addressLine1}
@@ -247,25 +256,25 @@ export const OrderDetail: React.FC = () => {
               <br />
               {order.deliveryAddress.country}
               <br />
-              <span style={{ marginTop: '8px', display: 'block' }}>{order.deliveryAddress.phoneNumber}</span>
+              <span style={{ marginTop: '16px', display: 'block', color: 'var(--text-muted)', fontSize: '0.85rem', letterSpacing: '0.05em' }}>{order.deliveryAddress.phoneNumber}</span>
             </div>
           </div>
 
-          <div className="card" style={{ padding: '24px' }}>
-            <h2 style={{ fontSize: '1.125rem', marginBottom: '16px' }}>Summary</h2>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', fontSize: '0.875rem' }}>
+          <div style={{ padding: '32px', border: '1px solid var(--border)', backgroundColor: 'var(--bg-card)' }}>
+            <h2 style={{ fontFamily: 'var(--font-title)', fontSize: '1.5rem', fontWeight: 400, marginBottom: '32px', letterSpacing: '0.02em' }}>Summary</h2>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', fontSize: '1rem' }}>
               <div className="flex-between" style={{ color: 'var(--text-secondary)' }}>
                 <span>Subtotal</span>
-                <span>${order.subtotal.toFixed(2)}</span>
+                <span>LKR {order.subtotal.toFixed(2)}</span>
               </div>
               <div className="flex-between" style={{ color: 'var(--text-secondary)' }}>
                 <span>Shipping</span>
-                <span>Free</span>
+                <span style={{ fontStyle: 'italic', fontSize: '0.9rem' }}>Free</span>
               </div>
-              <div style={{ borderTop: '1px solid var(--border)', paddingTop: '12px', marginTop: '4px' }}>
-                <div className="flex-between" style={{ fontWeight: 700, fontSize: '1.125rem' }}>
+              <div style={{ borderTop: '1px solid var(--border)', paddingTop: '24px', marginTop: '8px' }}>
+                <div className="flex-between" style={{ fontWeight: 400, fontFamily: 'var(--font-title)', fontSize: '1.5rem' }}>
                   <span>Total</span>
-                  <span>${order.total.toFixed(2)}</span>
+                  <span>LKR {order.total.toFixed(2)}</span>
                 </div>
               </div>
             </div>

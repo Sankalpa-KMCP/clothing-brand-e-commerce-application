@@ -54,8 +54,8 @@ export const ForgotPassword: React.FC = () => {
         )}
 
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-            <label style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Email Address</label>
+          <div className="form-group-premium">
+            <label className="form-label-premium">Email Address</label>
             <input
               type="email"
               className="input-field"
@@ -65,7 +65,7 @@ export const ForgotPassword: React.FC = () => {
               disabled={isSubmitting}
             />
           </div>
-          <button type="submit" className="btn btn-primary flex-center" disabled={isSubmitting}>
+          <button type="submit" className="btn btn-primary flex-center" style={{ padding: '14px' }} disabled={isSubmitting}>
             <Send size={16} />
             {isSubmitting ? 'Sending...' : 'Send reset instructions'}
           </button>

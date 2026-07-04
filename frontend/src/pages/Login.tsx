@@ -45,121 +45,106 @@ export const Login: React.FC = () => {
   };
 
   return (
-    <div className="flex-center animate-fade-in" style={{ minHeight: 'calc(100vh - 180px)', padding: '40px 20px' }}>
-      <div className="card" style={{
-        width: '100%',
-        maxWidth: '450px',
-        padding: '40px 32px'
-      }}>
-        {/* Header */}
-        <div style={{ textAlign: 'center', marginBottom: '32px' }}>
-          <h1 className="title-medium" style={{ marginBottom: '8px' }}>Welcome Back</h1>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.925rem' }}>
-            Sign in to access your profile and personalized shop.
-          </p>
+    <div className="animate-fade-in auth-split-layout" style={{ backgroundColor: 'var(--bg-primary)' }}>
+      {/* Image Panel */}
+      <div className="auth-image-panel">
+        <img src="/assets/auth_bg.jpg" alt="VÉLURE Lifestyle" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+        <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(0,0,0,0.1)' }} />
+        <div style={{ position: 'absolute', bottom: '60px', left: '60px', color: 'white' }}>
+          <h2 style={{ fontFamily: 'var(--font-title)', fontSize: '3rem', letterSpacing: '0.05em', marginBottom: '8px' }}>VÉLURE</h2>
+          <p style={{ fontSize: '1rem', letterSpacing: '0.1em', textTransform: 'uppercase' }}>Join the Inner Circle</p>
         </div>
+      </div>
 
-        {/* Error Callouts */}
-        {validationError && (
-          <div className="alert alert-error" style={{ fontSize: '0.875rem', padding: '12px' }}>
-            {validationError}
+      {/* Form Panel */}
+      <div className="auth-form-panel">
+        <div style={{ width: '100%', maxWidth: '420px' }}>
+          {/* Header */}
+          <div style={{ textAlign: 'center', marginBottom: '40px' }}>
+            <h1 className="title-medium" style={{ marginBottom: '12px' }}>Welcome Back</h1>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>
+              Sign in to access your curated profile.
+            </p>
           </div>
-        )}
-        {apiError && (
-          <div className="alert alert-error" style={{ fontSize: '0.875rem', padding: '12px' }}>
-            {apiError}
-          </div>
-        )}
 
-        {/* Login Form */}
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-          {/* Email field */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-            <label style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Email Address</label>
-            <div style={{ position: 'relative' }}>
-              <Mail size={16} style={{
-                position: 'absolute',
-                left: '16px',
-                top: '50%',
-                transform: 'translateY(-50%)',
-                color: 'var(--text-muted)'
-              }} />
-              <input
-                type="email"
-                placeholder="you@example.com"
-                className="input-field"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                style={{ paddingLeft: '48px' }}
-                disabled={isSubmitting}
-              />
+          {/* Error Callouts */}
+          {validationError && (
+            <div className="alert alert-error" style={{ fontSize: '0.875rem', padding: '12px', marginBottom: '24px' }}>
+              {validationError}
             </div>
-          </div>
-
-          {/* Password field */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-            <label style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Password</label>
-            <div style={{ position: 'relative' }}>
-              <Lock size={16} style={{
-                position: 'absolute',
-                left: '16px',
-                top: '50%',
-                transform: 'translateY(-50%)',
-                color: 'var(--text-muted)'
-              }} />
-              <input
-                type="password"
-                placeholder="Enter your password"
-                className="input-field"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                style={{ paddingLeft: '48px' }}
-                disabled={isSubmitting}
-              />
+          )}
+          {apiError && (
+            <div className="alert alert-error" style={{ fontSize: '0.875rem', padding: '12px', marginBottom: '24px' }}>
+              {apiError}
             </div>
+          )}
+
+          {/* Login Form */}
+          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            {/* Email field */}
+            <div className="form-group-premium">
+              <label className="form-label-premium">Email Address</label>
+              <div className="premium-input-container">
+                <Mail size={16} style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+                <input
+                  type="email"
+                  placeholder="you@example.com"
+                  className="input-field"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  style={{ paddingLeft: '48px', height: '48px' }}
+                  disabled={isSubmitting}
+                />
+              </div>
+            </div>
+
+            {/* Password field */}
+            <div className="form-group-premium">
+              <label className="form-label-premium">Password</label>
+              <div className="premium-input-container">
+                <Lock size={16} style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+                <input
+                  type="password"
+                  placeholder="Enter your password"
+                  className="input-field"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  style={{ paddingLeft: '48px', height: '48px' }}
+                  disabled={isSubmitting}
+                />
+              </div>
+            </div>
+
+            {/* Submit button */}
+            <button
+              type="submit"
+              className="btn btn-primary flex-center"
+              style={{ width: '100%', padding: '16px', marginTop: '16px' }}
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? (
+                <span>Signing In...</span>
+              ) : (
+                <span className="flex-center" style={{ gap: '8px' }}>
+                  <span>Sign In</span>
+                  <ArrowRight size={16} />
+                </span>
+              )}
+            </button>
+          </form>
+
+          <div style={{ textAlign: 'center', marginTop: '24px', fontSize: '0.875rem' }}>
+            <Link to="/forgot-password" style={{ color: 'var(--text-secondary)', textDecoration: 'underline' }}>
+              Forgot your password?
+            </Link>
           </div>
 
-          {/* Submit button */}
-          <button
-            type="submit"
-            className="btn btn-primary flex-center"
-            style={{ width: '100%', padding: '12px', marginTop: '10px' }}
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? (
-              <span>Signing In...</span>
-            ) : (
-              <span className="flex-center" style={{ gap: '6px' }}>
-                <span>Sign In</span>
-                <ArrowRight size={16} />
-              </span>
-            )}
-          </button>
-        </form>
-
-        <div style={{ textAlign: 'right', marginTop: '14px', fontSize: '0.875rem' }}>
-          <Link to="/forgot-password" style={{
-            color: 'var(--accent)',
-            fontWeight: 600
-          }}>
-            Forgot password?
-          </Link>
-        </div>
-
-        {/* Footer Navigation link */}
-        <div style={{
-          textAlign: 'center',
-          marginTop: '32px',
-          fontSize: '0.875rem',
-          color: 'var(--text-secondary)'
-        }}>
-          Don't have an account?{' '}
-          <Link to="/register" style={{
-            color: 'var(--accent)',
-            fontWeight: 600
-          }}>
-            Register Now
-          </Link>
+          <div style={{ borderTop: '1px solid var(--border)', marginTop: '40px', paddingTop: '32px', textAlign: 'center', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
+            New to VÉLURE?{' '}
+            <Link to="/register" style={{ color: 'var(--text-primary)', fontWeight: 600, borderBottom: '1px solid var(--text-primary)', paddingBottom: '2px' }}>
+              Create an account
+            </Link>
+          </div>
         </div>
       </div>
     </div>

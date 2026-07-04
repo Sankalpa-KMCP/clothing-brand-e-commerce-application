@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
-import { ShoppingBag, User, LogOut, LogIn, Menu, X } from 'lucide-react';
+import { User, LogOut, LogIn, Menu, X } from 'lucide-react';
 
 export const Navbar: React.FC = () => {
   const { user, logout } = useAuth();
@@ -20,60 +20,59 @@ export const Navbar: React.FC = () => {
 
   const isActive = (path: string) => location.pathname === path;
 
+  const linkClassName = (path: string) => 
+    `nav-link-premium ${isActive(path) ? 'is-active' : ''}`;
+
   const linkStyle = (path: string) => ({
     display: 'flex',
     alignItems: 'center',
     gap: '8px',
-    fontWeight: isActive(path) ? 600 : 400,
-    color: isActive(path) ? 'var(--accent)' : 'var(--text-secondary)',
+    fontWeight: isActive(path) ? 500 : 400,
+    color: isActive(path) ? 'var(--text-primary)' : 'var(--text-secondary)',
     transition: 'color var(--transition-fast)',
-    borderBottom: isActive(path) ? '2px solid var(--accent)' : '2px solid transparent',
     padding: '8px 0',
-    fontSize: '0.875rem',
+    fontSize: '0.8125rem',
     textTransform: 'uppercase' as const,
-    letterSpacing: '0.05em'
+    letterSpacing: '0.08em'
   });
 
   return (
-    <header style={{
-      borderBottom: '1px solid var(--border)',
-      backgroundColor: 'var(--bg-card)',
-      position: 'sticky',
-      top: 0,
-      zIndex: 100,
-      transition: 'background-color var(--transition-normal), border-color var(--transition-normal)'
-    }}>
+    <header className="premium-header">
+      {/* Top Announcement Bar */}
+      <div style={{ backgroundColor: 'var(--text-primary)', color: 'white', padding: '8px 24px', textAlign: 'center', fontSize: '0.75rem', fontWeight: 500, letterSpacing: '0.05em', textTransform: 'uppercase' }}>
+        Complimentary Global Shipping on Orders Over LKR 100,000
+      </div>
       <div className="container flex-between" style={{ height: '80px' }}>
         {/* Brand Logo */}
         <Link to="/" style={{
           display: 'flex',
           alignItems: 'center',
-          gap: '8px',
+          gap: '12px',
           fontFamily: 'var(--font-title)',
-          fontSize: '1.25rem',
-          fontWeight: 600,
-          letterSpacing: '0.1em',
+          fontSize: '1.4rem',
+          fontWeight: 700,
+          letterSpacing: '0.15em',
           color: 'var(--text-primary)',
           textTransform: 'uppercase'
-        }}>
-          <ShoppingBag size={20} strokeWidth={1.5} style={{ color: 'var(--accent)' }} />
-          <span>THREAD & Co.</span>
+        }} aria-label="VÉLURE Home">
+          <img src="/assets/velure_logo.jpg" alt="VÉLURE Logo" style={{ width: '32px', height: '32px', objectFit: 'cover', borderRadius: '4px' }} />
+          <span>VÉLURE</span>
         </Link>
 
         {/* Desktop Navigation */}
-        <nav style={{ display: 'flex', alignItems: 'center', gap: '32px' }} className="desktop-nav">
-          <Link to="/catalog" style={linkStyle('/catalog')}>
+        <nav style={{ display: 'flex', alignItems: 'center', gap: '32px' }} className="desktop-nav" aria-label="Primary Navigation">
+          <Link to="/catalog" style={linkStyle('/catalog')} className={linkClassName('/catalog')}>
             <span>Catalog</span>
           </Link>
 
           {user && (
-            <Link to="/addresses" style={linkStyle('/addresses')}>
+            <Link to="/addresses" style={linkStyle('/addresses')} className={linkClassName('/addresses')}>
               <span>Addresses</span>
             </Link>
           )}
 
           {user && (
-            <Link to="/orders" style={linkStyle('/orders')}>
+            <Link to="/orders" style={linkStyle('/orders')} className={linkClassName('/orders')}>
               <span>Orders</span>
             </Link>
           )}
@@ -81,7 +80,7 @@ export const Navbar: React.FC = () => {
           <Link to="/cart" style={{
             ...linkStyle('/cart'),
             position: 'relative'
-          }}>
+          }} className={linkClassName('/cart')}>
             <span>Bag</span>
             {cartCount > 0 && (
               <span className="flex-center" style={{
@@ -96,7 +95,7 @@ export const Navbar: React.FC = () => {
                 height: '16px',
                 borderRadius: '50%',
                 lineHeight: 1
-              }}>
+              }} aria-label={`${cartCount} items in bag`}>
                 {cartCount}
               </span>
             )}
@@ -104,7 +103,7 @@ export const Navbar: React.FC = () => {
 
           {user ? (
             <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
-              <Link to="/profile" style={linkStyle('/profile')}>
+              <Link to="/profile" style={linkStyle('/profile')} className={linkClassName('/profile')}>
                 <User size={16} strokeWidth={1.5} style={{ marginRight: '-2px' }} />
                 <span>{user.firstName}</span>
               </Link>
@@ -161,25 +160,25 @@ export const Navbar: React.FC = () => {
           gap: '20px',
           zIndex: 99
         }} className="mobile-drawer">
-          <Link to="/catalog" style={linkStyle('/catalog')} onClick={() => setMobileMenuOpen(false)}>
+          <Link to="/catalog" style={linkStyle('/catalog')} className={linkClassName('/catalog')} onClick={() => setMobileMenuOpen(false)}>
             <span>Catalog</span>
           </Link>
           {user && (
-            <Link to="/addresses" style={linkStyle('/addresses')} onClick={() => setMobileMenuOpen(false)}>
+            <Link to="/addresses" style={linkStyle('/addresses')} className={linkClassName('/addresses')} onClick={() => setMobileMenuOpen(false)}>
               <span>Addresses</span>
             </Link>
           )}
           {user && (
-            <Link to="/orders" style={linkStyle('/orders')} onClick={() => setMobileMenuOpen(false)}>
+            <Link to="/orders" style={linkStyle('/orders')} className={linkClassName('/orders')} onClick={() => setMobileMenuOpen(false)}>
               <span>Orders</span>
             </Link>
           )}
-          <Link to="/cart" style={linkStyle('/cart')} onClick={() => setMobileMenuOpen(false)}>
+          <Link to="/cart" style={linkStyle('/cart')} className={linkClassName('/cart')} onClick={() => setMobileMenuOpen(false)}>
             <span>Bag ({cartCount})</span>
           </Link>
           {user ? (
             <>
-              <Link to="/profile" style={linkStyle('/profile')} onClick={() => setMobileMenuOpen(false)}>
+              <Link to="/profile" style={linkStyle('/profile')} className={linkClassName('/profile')} onClick={() => setMobileMenuOpen(false)}>
                 <User size={16} strokeWidth={1.5} />
                 <span>{user.firstName}</span>
               </Link>
@@ -214,3 +213,4 @@ export const Navbar: React.FC = () => {
     </header>
   );
 };
+

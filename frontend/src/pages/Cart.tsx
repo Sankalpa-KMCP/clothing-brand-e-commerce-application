@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
-import { Trash2, Plus, Minus, ShoppingBag, AlertCircle, ArrowRight, Compass } from 'lucide-react';
+import { Plus, Minus, ShoppingBag, AlertCircle, ArrowRight, Compass } from 'lucide-react';
+import { EditorialMedia } from '../components/EditorialMedia';
 
 export const Cart: React.FC = () => {
   const { cart, isLoading, error, updateQty, removeItem } = useCart();
@@ -94,45 +95,35 @@ export const Cart: React.FC = () => {
         </div>
       ) : (
         /* Cart Grid Layout */
-        <div className="grid grid-3" style={{ gap: '40px', alignItems: 'start' }}>
+        <div className="grid grid-3" style={{ gap: '60px', alignItems: 'start' }}>
           {/* Left Column: Items List */}
-          <div style={{ gridColumn: 'span 2', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          <div style={{ gridColumn: 'span 2', display: 'flex', flexDirection: 'column', gap: '32px' }}>
             {cart.items.map((item) => (
               <div
                 key={item.cartItemId}
                 style={{
                   display: 'flex',
-                  gap: '20px',
-                  backgroundColor: 'var(--bg-card)',
-                  padding: '20px',
-                  borderRadius: 'var(--radius-lg)',
-                  border: item.available ? '1px solid var(--border)' : '1px solid var(--error)',
+                  gap: '24px',
+                  paddingBottom: '32px',
+                  borderBottom: '1px solid var(--border)',
                   position: 'relative'
                 }}
               >
                 {/* Product Thumbnail */}
-                <div style={{
-                  width: '100px',
-                  height: '120px',
-                  backgroundColor: 'var(--bg-secondary)',
-                  backgroundImage: item.imageUrl ? `url(${item.imageUrl})` : 'none',
-                  backgroundSize: 'cover',
-                  backgroundPosition: 'center',
-                  borderRadius: 'var(--radius-md)',
-                  flexShrink: 0,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: 'var(--text-muted)'
-                }}>
-                  {!item.imageUrl && <ShoppingBag size={24} />}
+                <div style={{ width: '120px', flexShrink: 0 }}>
+                  <EditorialMedia
+                    src={item.imageUrl}
+                    alt={item.productName}
+                    label={item.productName}
+                    style={{ height: '160px', border: 'none' }}
+                  />
                 </div>
 
                 {/* Details info */}
-                <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', flexGrow: 1 }}>
+                <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', flexGrow: 1, paddingTop: '8px' }}>
                   <div>
-                    <div className="flex-between">
-                      <Link to={`/products/${item.productId}`} style={{ fontWeight: 600, fontSize: '1.05rem' }}>
+                    <div className="flex-between" style={{ alignItems: 'flex-start' }}>
+                      <Link to={`/products/${item.productId}`} style={{ fontWeight: 400, fontFamily: 'var(--font-title)', fontSize: '1.5rem', letterSpacing: '0.02em' }}>
                         {item.productName}
                       </Link>
                       <button
@@ -143,18 +134,30 @@ export const Cart: React.FC = () => {
                           border: 'none',
                           color: 'var(--text-muted)',
                           cursor: 'pointer',
-                          padding: '4px'
+                          padding: '4px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          textTransform: 'uppercase',
+                          fontSize: '0.7rem',
+                          letterSpacing: '0.1em',
+                          fontWeight: 600
                         }}
-                        onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--error)')}
+                        onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--text-primary)')}
                         onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-muted)')}
                       >
-                        <Trash2 size={18} />
+                        Remove
                       </button>
                     </div>
 
-                    <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', display: 'block', marginTop: '4px' }}>
-                      Size: {item.size} | Color: {item.color}
-                    </span>
+                    <div style={{ display: 'flex', gap: '16px', marginTop: '12px' }}>
+                      <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                        Color: <span style={{ color: 'var(--text-primary)' }}>{item.color}</span>
+                      </span>
+                      <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                        Size: <span style={{ color: 'var(--text-primary)' }}>{item.size}</span>
+                      </span>
+                    </div>
 
                     {/* Stock Warning Badge */}
                     {!item.available && (
@@ -164,61 +167,50 @@ export const Cart: React.FC = () => {
                         fontWeight: 600,
                         backgroundColor: 'var(--error-bg)',
                         color: 'var(--error)',
-                        padding: '2px 8px',
-                        borderRadius: 'var(--radius-sm)',
-                        marginTop: '8px'
+                        padding: '4px 12px',
+                        marginTop: '16px',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.1em'
                       }}>
-                        Unavailable / Out of Stock
+                        Out of Stock
                       </span>
                     )}
                   </div>
 
                   {/* Quantity and Price section */}
-                  <div className="flex-between" style={{ marginTop: '16px' }}>
+                  <div className="flex-between" style={{ marginTop: '32px', alignItems: 'flex-end' }}>
                     {/* Quantity selectors */}
-                    <div className="flex-center" style={{
-                      border: '1px solid var(--border)',
-                      borderRadius: 'var(--radius-md)',
-                      backgroundColor: 'var(--bg-primary)',
-                      padding: '2px'
-                    }}>
-                      <button
-                        onClick={() => handleQuantityChange(item.cartItemId, item.quantity, -1)}
-                        disabled={item.quantity <= 1 || updatingItemId === item.cartItemId}
-                        className="btn btn-secondary"
-                        style={{
-                          padding: '4px 8px',
-                          border: 'none',
-                          borderRadius: 'var(--radius-sm)'
-                        }}
-                      >
-                        <Minus size={14} />
-                      </button>
-                      <span style={{ minWidth: '32px', textAlign: 'center', fontWeight: 600, fontSize: '0.925rem' }}>
-                        {item.quantity}
-                      </span>
-                      <button
-                        onClick={() => handleQuantityChange(item.cartItemId, item.quantity, 1)}
-                        disabled={updatingItemId === item.cartItemId || !item.available}
-                        className="btn btn-secondary"
-                        style={{
-                          padding: '4px 8px',
-                          border: 'none',
-                          borderRadius: 'var(--radius-sm)'
-                        }}
-                      >
-                        <Plus size={14} />
-                      </button>
+                    <div className="flex-center" style={{ gap: '12px' }}>
+                      <span style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-muted)' }}>QTY</span>
+                      <div className="flex-center" style={{ borderBottom: '1px solid var(--text-primary)', paddingBottom: '4px', gap: '16px' }}>
+                        <button
+                          onClick={() => handleQuantityChange(item.cartItemId, item.quantity, -1)}
+                          disabled={item.quantity <= 1 || updatingItemId === item.cartItemId}
+                          style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0 4px', color: 'var(--text-primary)' }}
+                        >
+                          <Minus size={14} />
+                        </button>
+                        <span style={{ minWidth: '24px', textAlign: 'center', fontWeight: 400, fontSize: '1.1rem' }}>
+                          {item.quantity}
+                        </span>
+                        <button
+                          onClick={() => handleQuantityChange(item.cartItemId, item.quantity, 1)}
+                          disabled={updatingItemId === item.cartItemId || !item.available}
+                          style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0 4px', color: 'var(--text-primary)' }}
+                        >
+                          <Plus size={14} />
+                        </button>
+                      </div>
                     </div>
 
                     {/* Pricing */}
                     <div style={{ textAlign: 'right' }}>
-                      <span style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginRight: '8px' }}>
-                        ${item.unitPrice.toFixed(2)} ea
-                      </span>
-                      <span style={{ fontWeight: 700, fontSize: '1.125rem' }}>
-                        ${item.lineTotal.toFixed(2)}
-                      </span>
+                      <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '4px' }}>
+                        LKR {item.unitPrice.toFixed(2)} ea
+                      </div>
+                      <div style={{ fontWeight: 400, fontFamily: 'var(--font-title)', fontSize: '1.5rem' }}>
+                        LKR {item.lineTotal.toFixed(2)}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -227,29 +219,29 @@ export const Cart: React.FC = () => {
           </div>
 
           {/* Right Column: Order Summary Card */}
-          <div className="card" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
-            <h2 className="title-small" style={{ fontWeight: 700 }}>Summary</h2>
+          <div style={{ padding: '32px', backgroundColor: 'var(--bg-secondary)', border: '1px solid var(--border)' }}>
+            <h2 style={{ fontFamily: 'var(--font-title)', fontSize: '1.8rem', fontWeight: 400, marginBottom: '32px', letterSpacing: '0.02em' }}>Order Summary</h2>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              <div className="flex-between" style={{ fontSize: '0.925rem', color: 'var(--text-secondary)' }}>
-                <span>Subtotal ({cart.totalQuantity} items)</span>
-                <span>${cart.cartTotal.toFixed(2)}</span>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div className="flex-between" style={{ fontSize: '1rem', color: 'var(--text-primary)' }}>
+                <span>Subtotal <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>({cart.totalQuantity} items)</span></span>
+                <span>LKR {cart.cartTotal.toFixed(2)}</span>
               </div>
-              <div className="flex-between" style={{ fontSize: '0.925rem', color: 'var(--text-secondary)' }}>
+              <div className="flex-between" style={{ fontSize: '1rem', color: 'var(--text-primary)' }}>
                 <span>Shipping</span>
-                <span style={{ fontStyle: 'italic', fontSize: '0.85rem' }}>Computed at checkout</span>
+                <span style={{ fontStyle: 'italic', fontSize: '0.9rem', color: 'var(--text-muted)' }}>Calculated at checkout</span>
               </div>
             </div>
 
-            <hr style={{ border: 'none', borderTop: '1px solid var(--border)' }} />
+            <hr style={{ border: 'none', borderTop: '1px solid var(--border)', margin: '24px 0' }} />
 
-            <div className="flex-between" style={{ fontWeight: 700, fontSize: '1.125rem' }}>
+            <div className="flex-between" style={{ fontWeight: 400, fontFamily: 'var(--font-title)', fontSize: '1.8rem', marginBottom: '32px' }}>
               <span>Total</span>
-              <span style={{ color: 'var(--accent)' }}>${cart.cartTotal.toFixed(2)}</span>
+              <span>LKR {cart.cartTotal.toFixed(2)}</span>
             </div>
 
             {hasUnavailableItems && (
-              <div className="alert alert-error" style={{ fontSize: '0.8rem', padding: '8px 12px', marginBottom: 0 }}>
+              <div className="alert alert-error" style={{ fontSize: '0.8rem', padding: '12px', marginBottom: '24px', borderRadius: '0' }}>
                 Please remove unavailable items to check out.
               </div>
             )}
@@ -260,25 +252,18 @@ export const Cart: React.FC = () => {
               className="btn btn-primary flex-center"
               style={{
                 width: '100%',
-                padding: '14px',
-                fontSize: '1rem',
-                fontWeight: 600,
+                padding: '20px',
+                fontSize: '1.1rem',
+                letterSpacing: '0.1em',
                 textDecoration: 'none',
                 justifyContent: 'center',
-                gap: '8px'
+                gap: '12px',
+                borderRadius: '0'
               }}
             >
-              <span>Proceed to Checkout</span>
-              <ArrowRight size={16} />
+              <span>Checkout Securely</span>
+              <ArrowRight size={18} />
             </Link>
-            <p style={{
-              fontSize: '0.75rem',
-              color: 'var(--text-muted)',
-              textAlign: 'center',
-              lineHeight: 1.4
-            }}>
-              Checkout integration is deferred for the next development phase.
-            </p>
           </div>
         </div>
       )}

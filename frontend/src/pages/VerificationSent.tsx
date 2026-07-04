@@ -40,7 +40,7 @@ export const VerificationSent: React.FC = () => {
 
   return (
     <div className="flex-center animate-fade-in" style={{ minHeight: 'calc(100vh - 180px)', padding: '40px 20px' }}>
-      <div className="card" style={{ width: '100%', maxWidth: '500px', padding: '40px 32px' }}>
+      <div className="verification-card-premium">
         <div style={{ textAlign: 'center', marginBottom: '28px' }}>
           <MailCheck size={42} style={{ color: 'var(--accent)', marginBottom: '16px' }} />
           <h1 className="title-medium" style={{ marginBottom: '8px' }}>Verify your email</h1>
@@ -61,8 +61,8 @@ export const VerificationSent: React.FC = () => {
         )}
 
         <form onSubmit={handleResend} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-            <label style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Email Address</label>
+          <div className="form-group-premium">
+            <label className="form-label-premium">Email Address</label>
             <input
               type="email"
               className="input-field"
@@ -72,7 +72,7 @@ export const VerificationSent: React.FC = () => {
               disabled={isSubmitting}
             />
           </div>
-          <button type="submit" className="btn btn-primary flex-center" disabled={isSubmitting}>
+          <button type="submit" className="btn btn-primary flex-center" style={{ padding: '14px' }} disabled={isSubmitting}>
             <Send size={16} />
             {isSubmitting ? 'Sending...' : 'Resend verification'}
           </button>

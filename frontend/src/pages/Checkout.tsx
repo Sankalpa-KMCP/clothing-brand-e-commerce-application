@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { addressApi, type AddressResponse } from '../api/addressApi';
 import { orderApi } from '../api/orderApi';
-import { MapPin, AlertCircle, ShoppingBag, ArrowRight, CreditCard, Clock } from 'lucide-react';
+import { AlertCircle, ShoppingBag, ArrowRight, CreditCard, Clock } from 'lucide-react';
+import { EditorialMedia } from '../components/EditorialMedia';
 
 const STRIPE_CHECKOUT_ENABLED = import.meta.env.VITE_STRIPE_CHECKOUT_ENABLED === 'true';
 
@@ -80,186 +81,208 @@ export const Checkout: React.FC = () => {
 
   if (cartLoading || loadingAddresses) {
     return (
-      <div className="container" style={{ padding: '40px 0', textAlign: 'center' }}>
-        <p>Loading checkout...</p>
+      <div className="flex-center" style={{ height: '400px' }}>
+        <div style={{
+          border: '4px solid var(--border)',
+          borderTopColor: 'var(--accent)',
+          borderRadius: 'var(--radius-full)',
+          width: '40px',
+          height: '40px',
+          animation: 'spin 1s linear infinite'
+        }} />
+        <style>{`
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+        `}</style>
       </div>
     );
   }
 
   if (!cart || cart.items.length === 0) {
     return (
-      <div className="container" style={{ padding: '60px 0', textAlign: 'center' }}>
-        <ShoppingBag size={48} style={{ color: 'var(--text-muted)', margin: '0 auto 16px' }} />
-        <h2>Your bag is empty</h2>
-        <p style={{ color: 'var(--text-secondary)', marginBottom: '24px' }}>
-          You need items in your bag to checkout.
-        </p>
-        <button className="btn btn-primary" onClick={() => navigate('/catalog')}>
-          Continue Shopping
-        </button>
+      <div className="container animate-fade-in" style={{ padding: '80px 20px', textAlign: 'center' }}>
+        <div style={{
+          maxWidth: '500px',
+          margin: '0 auto',
+          padding: '60px 40px',
+          backgroundColor: 'var(--bg-card)',
+          borderRadius: 'var(--radius-lg)',
+          border: '1px solid var(--border)'
+        }}>
+          <ShoppingBag size={48} style={{ color: 'var(--text-muted)', marginBottom: '20px' }} />
+          <h2 className="title-small" style={{ marginBottom: '8px' }}>Your bag is empty</h2>
+          <p style={{ color: 'var(--text-secondary)', marginBottom: '24px' }}>
+            You need items in your bag to checkout.
+          </p>
+          <button className="btn btn-primary" onClick={() => navigate('/catalog')}>
+            Continue Shopping
+          </button>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="container" style={{ padding: '40px 0' }}>
-      <h1 style={{ marginBottom: '32px', fontFamily: 'var(--font-title)' }}>Checkout</h1>
+    <div className="container animate-fade-in" style={{ padding: '40px 20px 80px 20px' }}>
+      <div style={{ marginBottom: '30px' }}>
+        <h1 className="title-medium" style={{ marginBottom: '8px' }}>Checkout</h1>
+        <p style={{ color: 'var(--text-secondary)' }}>Review your details and place your order.</p>
+      </div>
 
       {error && (
-        <div style={{
-          backgroundColor: 'rgba(239, 68, 68, 0.1)',
-          color: 'var(--error)',
-          padding: '16px',
-          borderRadius: '8px',
-          marginBottom: '24px',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '12px'
-        }}>
+        <div className="alert alert-error animate-fade-in" style={{ marginBottom: '30px' }}>
           <AlertCircle size={20} />
           <span>{error}</span>
         </div>
       )}
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 380px', gap: '32px', alignItems: 'start' }}>
+      <div className="grid grid-3" style={{ gap: '60px', alignItems: 'start' }}>
         
-        {/* Left Column: Address Selection */}
-        <div>
-          <div className="card" style={{ padding: '24px', marginBottom: '24px' }}>
-            <h2 style={{ fontSize: '1.25rem', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <MapPin size={20} />
-              Delivery Address
+        {/* Left Column: Address Selection & Payment */}
+        <div style={{ gridColumn: 'span 2', display: 'flex', flexDirection: 'column', gap: '48px' }}>
+          <div>
+            <h2 style={{ fontFamily: 'var(--font-title)', fontSize: '1.8rem', fontWeight: 400, marginBottom: '32px', letterSpacing: '0.02em', display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '32px', height: '32px', border: '1px solid var(--text-primary)', borderRadius: '50%', fontSize: '1rem' }}>1</span>
+              Delivery Details
             </h2>
             
             {addresses.length === 0 ? (
-              <div>
-                <p style={{ color: 'var(--text-secondary)', marginBottom: '16px' }}>
+              <div style={{ padding: '32px', border: '1px solid var(--border)', backgroundColor: 'var(--bg-card)' }}>
+                <p style={{ color: 'var(--text-secondary)', marginBottom: '24px', fontSize: '1rem', letterSpacing: '0.02em' }}>
                   You don't have any saved addresses. Please add one to continue.
                 </p>
-                <button className="btn btn-secondary" onClick={() => navigate('/addresses')}>
+                <button className="btn btn-primary" onClick={() => navigate('/addresses')} style={{ borderRadius: '0' }}>
                   Add New Address
                 </button>
               </div>
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                {addresses.map(address => (
-                  <label key={address.id} style={{
-                    display: 'flex',
-                    alignItems: 'flex-start',
-                    gap: '12px',
-                    padding: '16px',
-                    border: `1px solid ${selectedAddressId === address.id ? 'var(--accent)' : 'var(--border)'}`,
-                    borderRadius: '8px',
-                    cursor: 'pointer',
-                    transition: 'border-color var(--transition-fast)'
-                  }}>
-                    <input 
-                      type="radio" 
-                      name="address" 
-                      value={address.id}
-                      checked={selectedAddressId === address.id}
-                      onChange={() => setSelectedAddressId(address.id)}
-                      style={{ marginTop: '4px' }}
-                    />
-                    <div>
-                      <div style={{ fontWeight: 600, marginBottom: '4px' }}>
-                        {address.recipientName} {address.label && <span style={{ color: 'var(--text-secondary)', fontWeight: 400, marginLeft: '8px' }}>({address.label})</span>}
-                        {address.isDefault && (
-                          <span style={{ 
-                            marginLeft: '8px', 
-                            fontSize: '0.75rem', 
-                            backgroundColor: 'rgba(59, 130, 246, 0.1)', 
-                            color: 'var(--accent)', 
-                            padding: '2px 8px', 
-                            borderRadius: '12px' 
-                          }}>Default</span>
-                        )}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px' }}>
+                {addresses.map(address => {
+                  const isSelected = selectedAddressId === address.id;
+                  return (
+                    <label
+                      key={address.id}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'flex-start',
+                        gap: '16px',
+                        padding: '24px',
+                        border: isSelected ? '1px solid var(--text-primary)' : '1px solid var(--border)',
+                        backgroundColor: isSelected ? 'var(--bg-secondary)' : 'var(--bg-card)',
+                        cursor: 'pointer',
+                        transition: 'all var(--transition-fast)'
+                      }}
+                    >
+                      <input 
+                        type="radio" 
+                        name="address" 
+                        value={address.id}
+                        checked={isSelected}
+                        onChange={() => setSelectedAddressId(address.id)}
+                        style={{ marginTop: '4px', accentColor: 'var(--text-primary)', transform: 'scale(1.2)' }}
+                      />
+                      <div style={{ flexGrow: 1 }}>
+                        <div style={{ fontWeight: 600, fontSize: '1.05rem', marginBottom: '8px', display: 'flex', justifyContent: 'space-between' }}>
+                          <span>{address.recipientName}</span>
+                          {address.label && <span style={{ color: 'var(--text-secondary)', fontWeight: 400, fontSize: '0.85rem' }}>{address.label}</span>}
+                        </div>
+                        <div style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', lineHeight: 1.6 }}>
+                          {address.addressLine1}
+                          {address.addressLine2 && <><br />{address.addressLine2}</>}
+                          <br />
+                          {address.city}, {address.region} {address.postalCode}
+                          <br />
+                          {address.country}
+                          <br />
+                          <span style={{ marginTop: '12px', display: 'block', color: 'var(--text-muted)', fontSize: '0.85rem', letterSpacing: '0.05em' }}>{address.phoneNumber}</span>
+                        </div>
                       </div>
-                      <div style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', lineHeight: 1.5 }}>
-                        {address.addressLine1}
-                        {address.addressLine2 && <><br />{address.addressLine2}</>}
-                        <br />
-                        {address.city}, {address.region} {address.postalCode}
-                        <br />
-                        {address.country}
-                        <br />
-                        <span style={{ marginTop: '4px', display: 'block' }}>{address.phoneNumber}</span>
-                      </div>
-                    </div>
-                  </label>
-                ))}
+                    </label>
+                  );
+                })}
               </div>
             )}
           </div>
           
-          <div className="card" style={{ padding: '24px' }}>
-             <h2 style={{ fontSize: '1.25rem', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-               <CreditCard size={20} />
-               Payment
+          <hr style={{ border: 'none', borderTop: '1px solid var(--border)' }} />
+
+          <div>
+             <h2 style={{ fontFamily: 'var(--font-title)', fontSize: '1.8rem', fontWeight: 400, marginBottom: '32px', letterSpacing: '0.02em', display: 'flex', alignItems: 'center', gap: '12px' }}>
+               <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '32px', height: '32px', border: '1px solid var(--text-primary)', borderRadius: '50%', fontSize: '1rem' }}>2</span>
+               Payment Method
              </h2>
-             {STRIPE_CHECKOUT_ENABLED ? (
-               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', color: 'var(--text-secondary)' }}>
-                 <p>
-                   You will continue to Stripe Checkout to pay securely. Your items are reserved temporarily while payment is pending.
+             <div style={{ padding: '32px', border: '1px solid var(--border)', backgroundColor: 'var(--bg-card)' }}>
+               {STRIPE_CHECKOUT_ENABLED ? (
+                 <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', color: 'var(--text-secondary)' }}>
+                   <p style={{ fontSize: '1rem', lineHeight: 1.6, display: 'flex', alignItems: 'center', gap: '12px' }}>
+                     <CreditCard size={24} style={{ color: 'var(--text-primary)' }} />
+                     You will continue to Stripe Checkout to pay securely. Your items are reserved temporarily while payment is pending.
+                   </p>
+                   <p style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '0.9rem', color: 'var(--text-muted)', marginTop: '8px' }}>
+                     <Clock size={18} />
+                     Final order confirmation happens after payment is verified.
+                   </p>
+                 </div>
+               ) : (
+                 <p style={{ color: 'var(--text-secondary)', fontSize: '1rem', lineHeight: 1.6, display: 'flex', alignItems: 'center', gap: '12px' }}>
+                   <CreditCard size={24} style={{ color: 'var(--text-primary)' }} />
+                   Payment processing is deferred for this phase. Placing your order will secure your items and update our systems.
                  </p>
-                 <p style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.9rem' }}>
-                   <Clock size={16} />
-                   Final order confirmation happens after payment is verified.
-                 </p>
-               </div>
-             ) : (
-               <p style={{ color: 'var(--text-secondary)' }}>
-                 Payment processing is deferred for this phase. Placing your order will secure your items and update our systems.
-               </p>
-             )}
+               )}
+             </div>
           </div>
         </div>
 
-        {/* Right Column: Order Summary */}
-        <div className="card" style={{ padding: '24px', position: 'sticky', top: '90px' }}>
-          <h2 style={{ fontSize: '1.25rem', marginBottom: '20px' }}>Order Summary</h2>
+        {/* Right Column: Order Summary Card */}
+        <div style={{ padding: '32px', backgroundColor: 'var(--bg-secondary)', border: '1px solid var(--border)', position: 'sticky', top: '40px' }}>
+          <h2 style={{ fontFamily: 'var(--font-title)', fontSize: '1.8rem', fontWeight: 400, marginBottom: '32px', letterSpacing: '0.02em' }}>Order Summary</h2>
           
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '24px', maxHeight: '400px', overflowY: 'auto' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', marginBottom: '32px', maxHeight: '400px', overflowY: 'auto', paddingRight: '8px' }}>
             {cart.items.map(item => (
-              <div key={item.cartItemId} style={{ display: 'flex', gap: '12px' }}>
-                <img 
-                  src={item.imageUrl} 
-                  alt={item.productName} 
-                  style={{ width: '60px', height: '80px', objectFit: 'cover', borderRadius: '4px' }}
-                />
+              <div key={item.cartItemId} style={{ display: 'flex', gap: '20px', alignItems: 'flex-start' }}>
+                <div style={{ width: '80px', flexShrink: 0 }}>
+                  <EditorialMedia
+                    src={item.imageUrl}
+                    alt={item.productName}
+                    label={item.productName}
+                    style={{ height: '100px', border: 'none' }}
+                  />
+                </div>
                 <div style={{ flex: 1 }}>
-                  <div style={{ fontWeight: 500, fontSize: '0.875rem', marginBottom: '4px' }}>{item.productName}</div>
-                  <div style={{ color: 'var(--text-secondary)', fontSize: '0.75rem', marginBottom: '4px' }}>
-                    {item.color} | {item.size} | Qty: {item.quantity}
+                  <div style={{ fontWeight: 400, fontFamily: 'var(--font-title)', fontSize: '1.2rem', marginBottom: '8px', letterSpacing: '0.02em' }}>{item.productName}</div>
+                  <div style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    {item.color} / {item.size} / Qty: {item.quantity}
                   </div>
-                  <div style={{ fontWeight: 600, fontSize: '0.875rem' }}>${item.lineTotal.toFixed(2)}</div>
+                  <div style={{ fontWeight: 400, fontSize: '1.1rem' }}>LKR {item.lineTotal.toFixed(2)}</div>
                 </div>
               </div>
             ))}
           </div>
 
-          <div style={{ borderTop: '1px solid var(--border)', paddingTop: '16px', marginBottom: '24px' }}>
-            <div className="flex-between" style={{ marginBottom: '12px', color: 'var(--text-secondary)' }}>
+          <div style={{ borderTop: '1px solid var(--border)', paddingTop: '24px', marginBottom: '32px' }}>
+            <div className="flex-between" style={{ marginBottom: '16px', color: 'var(--text-primary)', fontSize: '1rem' }}>
               <span>Subtotal</span>
-              <span>${cart.cartTotal.toFixed(2)}</span>
+              <span>LKR {cart.cartTotal.toFixed(2)}</span>
             </div>
-            <div className="flex-between" style={{ marginBottom: '12px', color: 'var(--text-secondary)' }}>
+            <div className="flex-between" style={{ marginBottom: '16px', color: 'var(--text-primary)', fontSize: '1rem' }}>
               <span>Shipping</span>
-              <span>Free</span>
+              <span style={{ fontStyle: 'italic', fontSize: '0.9rem', color: 'var(--text-muted)' }}>Free</span>
             </div>
-            <div className="flex-between" style={{ fontWeight: 700, fontSize: '1.125rem', marginTop: '16px' }}>
+            <div className="flex-between" style={{ fontWeight: 400, fontFamily: 'var(--font-title)', fontSize: '1.8rem', marginTop: '24px' }}>
               <span>Total</span>
-              <span>${cart.cartTotal.toFixed(2)}</span>
+              <span>LKR {cart.cartTotal.toFixed(2)}</span>
             </div>
           </div>
 
           <button 
             className="btn btn-primary" 
-            style={{ width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px' }}
+            style={{ width: '100%', padding: '20px', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '12px', fontSize: '1.1rem', letterSpacing: '0.1em', borderRadius: '0' }}
             onClick={handleCheckout}
             disabled={submitting || addresses.length === 0 || !selectedAddressId}
           >
-            {submitting ? 'Processing...' : STRIPE_CHECKOUT_ENABLED ? 'Continue to Payment' : 'Place Order'}
+            {submitting ? 'Processing...' : STRIPE_CHECKOUT_ENABLED ? 'Continue to Payment' : 'Complete Order'}
             {!submitting && <ArrowRight size={18} />}
           </button>
         </div>

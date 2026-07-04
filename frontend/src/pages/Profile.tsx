@@ -183,88 +183,98 @@ export const Profile: React.FC = () => {
   return (
     <div className="container animate-fade-in" style={{ padding: '60px 20px 80px 20px' }}>
       <div style={{ maxWidth: '600px', margin: '0 auto' }}>
-        <h1 className="title-medium" style={{ marginBottom: '30px' }}>My Account</h1>
+        <div style={{ marginBottom: '30px' }}>
+          <span className="atelier-kicker">Member Space</span>
+          <h1 className="title-medium" style={{ marginTop: '6px' }}>My Account</h1>
+        </div>
 
         {/* Profile Card */}
-        <div className="card" style={{ padding: '32px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
+        <div className="card" style={{ padding: '40px 32px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
           {/* User Icon/Greeting Header */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
             <div className="flex-center" style={{
               width: '64px',
               height: '64px',
               borderRadius: 'var(--radius-full)',
-              backgroundColor: 'var(--accent-light)',
+              backgroundColor: 'var(--bg-secondary)',
+              border: '1px solid var(--border)',
               color: 'var(--accent)'
             }}>
-              <User size={32} />
+              <User size={28} strokeWidth={1.5} />
             </div>
             <div>
-              <h2 className="title-small" style={{ fontWeight: 700 }}>
+              <h2 className="title-small" style={{ fontWeight: 600 }}>
                 {user.firstName} {user.lastName}
               </h2>
               <span style={{
-                fontSize: '0.875rem',
-                color: 'var(--text-muted)',
+                fontSize: '0.75rem',
+                color: 'var(--text-secondary)',
                 backgroundColor: 'var(--bg-secondary)',
-                padding: '2px 8px',
+                padding: '4px 10px',
                 borderRadius: 'var(--radius-sm)',
-                fontWeight: 500
+                fontWeight: 600,
+                letterSpacing: '0.05em',
+                textTransform: 'uppercase'
               }}>
                 Customer Account
               </span>
             </div>
           </div>
 
-          <hr style={{ border: 'none', borderTop: '1px solid var(--border)' }} />
+          <hr style={{ border: 'none', borderTop: '1px solid var(--border)', margin: '12px 0' }} />
 
           {/* Details fields */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
             {/* Email Address */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <Mail size={18} style={{ color: 'var(--text-secondary)' }} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+              <div style={{ color: 'var(--text-muted)' }}><Mail size={20} strokeWidth={1.5} /></div>
               <div>
                 <span style={{
                   fontSize: '0.75rem',
                   color: 'var(--text-muted)',
                   display: 'block',
-                  fontWeight: 600
+                  fontWeight: 600,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em'
                 }}>
                   Email Address
                 </span>
-                <span style={{ color: 'var(--text-primary)', fontWeight: 500 }}>
+                <span style={{ color: 'var(--text-primary)', fontWeight: 500, fontSize: '0.975rem' }}>
                   {user.email}
                 </span>
               </div>
             </div>
 
             {/* Role Group */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <Shield size={18} style={{ color: 'var(--text-secondary)' }} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+              <div style={{ color: 'var(--text-muted)' }}><Shield size={20} strokeWidth={1.5} /></div>
               <div>
                 <span style={{
                   fontSize: '0.75rem',
                   color: 'var(--text-muted)',
                   display: 'block',
-                  fontWeight: 600
+                  fontWeight: 600,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em'
                 }}>
                   Access Role
                 </span>
-                <span style={{ color: 'var(--text-primary)', fontWeight: 500 }}>
+                <span style={{ color: 'var(--text-primary)', fontWeight: 500, fontSize: '0.975rem' }}>
                   {user.role}
                 </span>
               </div>
             </div>
           </div>
 
-          <hr style={{ border: 'none', borderTop: '1px solid var(--border)' }} />
+          <hr style={{ border: 'none', borderTop: '1px solid var(--border)', margin: '12px 0' }} />
 
           {/* Action links */}
           <div style={{ display: 'flex', gap: '16px', marginTop: '10px' }}>
-            <button onClick={handleLogout} className="btn btn-secondary flex-center" style={{ flexGrow: 1, padding: '12px' }}>
+            <button onClick={handleLogout} className="btn btn-secondary flex-center" style={{ flexGrow: 1, padding: '14px' }}>
               <LogOut size={16} />
               <span>Sign Out</span>
             </button>
-            <button onClick={() => navigate('/catalog')} className="btn btn-primary flex-center" style={{ flexGrow: 1, padding: '12px' }}>
+            <button onClick={() => navigate('/catalog')} className="btn btn-primary flex-center" style={{ flexGrow: 1, padding: '14px' }}>
               <span>Shop Collection</span>
               <ArrowRight size={16} />
             </button>

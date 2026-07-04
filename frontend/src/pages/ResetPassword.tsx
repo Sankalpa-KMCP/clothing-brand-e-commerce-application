@@ -76,9 +76,9 @@ export const ResetPassword: React.FC = () => {
         )}
 
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-            <label style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-secondary)' }}>New Password</label>
-            <div style={{ position: 'relative' }}>
+          <div className="form-group-premium">
+            <label className="form-label-premium">New Password</label>
+            <div className="premium-input-container">
               <Lock size={16} style={{
                 position: 'absolute',
                 left: '16px',
@@ -97,9 +97,9 @@ export const ResetPassword: React.FC = () => {
               />
             </div>
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-            <label style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Confirm Password</label>
-            <div style={{ position: 'relative' }}>
+          <div className="form-group-premium">
+            <label className="form-label-premium">Confirm Password</label>
+            <div className="premium-input-container">
               <Lock size={16} style={{
                 position: 'absolute',
                 left: '16px',
@@ -118,7 +118,7 @@ export const ResetPassword: React.FC = () => {
               />
             </div>
           </div>
-          <button type="submit" className="btn btn-primary flex-center" disabled={isSubmitting || !tokenRef.current}>
+          <button type="submit" className="btn btn-primary flex-center" style={{ padding: '14px' }} disabled={isSubmitting || !tokenRef.current}>
             {isSubmitting ? 'Updating...' : 'Update password'}
           </button>
         </form>

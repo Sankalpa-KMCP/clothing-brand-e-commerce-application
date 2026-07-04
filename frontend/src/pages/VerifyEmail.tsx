@@ -37,7 +37,7 @@ export const VerifyEmail: React.FC = () => {
 
   return (
     <div className="flex-center animate-fade-in" style={{ minHeight: 'calc(100vh - 180px)', padding: '40px 20px' }}>
-      <div className="card" style={{ width: '100%', maxWidth: '500px', padding: '40px 32px', textAlign: 'center' }}>
+      <div className="verification-card-premium">
         {status === 'success' ? (
           <CheckCircle2 size={44} style={{ color: 'var(--success)', marginBottom: '18px' }} />
         ) : (
@@ -49,12 +49,12 @@ export const VerifyEmail: React.FC = () => {
         <p style={{ color: 'var(--text-secondary)', lineHeight: 1.6, marginBottom: '24px' }}>
           {message}
         </p>
-        <div className="flex-center" style={{ gap: '12px', flexWrap: 'wrap' }}>
-          <Link to="/login" className="btn btn-primary">
+        <div className="flex-center" style={{ gap: '12px', flexWrap: 'wrap', justifyContent: 'center' }}>
+          <Link to="/login" className="btn btn-primary" style={{ padding: '12px 24px' }}>
             Sign in
           </Link>
           {status === 'error' && (
-            <Link to="/verification-sent" className="btn btn-secondary">
+            <Link to="/verification-sent" className="btn btn-secondary" style={{ padding: '12px 24px' }}>
               Request a new link
             </Link>
           )}

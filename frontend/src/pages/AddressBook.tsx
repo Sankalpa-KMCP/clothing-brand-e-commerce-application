@@ -234,15 +234,12 @@ export const AddressBook: React.FC = () => {
           {addresses.map((address) => (
             <div
               key={address.id}
-              className="card"
+              className={`address-card-premium ${address.isDefault ? 'is-selected' : ''}`}
               style={{
-                padding: '24px',
                 display: 'flex',
                 flexDirection: 'column',
                 justifyContent: 'space-between',
-                gap: '16px',
-                border: address.isDefault ? '2px solid var(--accent)' : '1px solid var(--border)',
-                backgroundColor: 'var(--bg-card)'
+                gap: '16px'
               }}
             >
               <div>
@@ -251,11 +248,12 @@ export const AddressBook: React.FC = () => {
                     display: 'inline-flex',
                     alignItems: 'center',
                     gap: '4px',
-                    fontSize: '0.8rem',
+                    fontSize: '0.75rem',
                     fontWeight: 600,
                     textTransform: 'uppercase',
                     color: 'var(--accent)',
-                    backgroundColor: 'var(--accent-light)',
+                    backgroundColor: 'var(--bg-secondary)',
+                    border: '1px solid var(--border)',
                     padding: '2px 8px',
                     borderRadius: 'var(--radius-sm)'
                   }}>
@@ -267,7 +265,7 @@ export const AddressBook: React.FC = () => {
                     <span className="flex-center" style={{
                       gap: '4px',
                       color: 'var(--success)',
-                      fontSize: '0.8rem',
+                      fontSize: '0.75rem',
                       fontWeight: 600
                     }}>
                       <CheckCircle2 size={14} />
@@ -276,13 +274,13 @@ export const AddressBook: React.FC = () => {
                   )}
                 </div>
 
-                <h3 style={{ fontSize: '1.05rem', fontWeight: 700, marginBottom: '4px' }}>
+                <h3 style={{ fontSize: '1.05rem', fontWeight: 600, marginBottom: '4px' }}>
                   {address.recipientName}
                 </h3>
-                <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginBottom: '2px' }}>
+                <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '4px' }}>
                   {address.phoneNumber}
                 </p>
-                <p style={{ fontSize: '0.9rem', color: 'var(--text-primary)', lineHeight: 1.4 }}>
+                <p style={{ fontSize: '0.875rem', color: 'var(--text-primary)', lineHeight: 1.5 }}>
                   {address.addressLine1}
                   {address.addressLine2 && `, ${address.addressLine2}`}
                   <br />
@@ -300,7 +298,7 @@ export const AddressBook: React.FC = () => {
                   <button
                     onClick={() => handleSetDefault(address.id)}
                     className="btn btn-secondary"
-                    style={{ flexGrow: 1, padding: '6px 12px', fontSize: '0.8rem' }}
+                    style={{ flexGrow: 1, padding: '8px 12px', fontSize: '0.75rem' }}
                   >
                     Set Default
                   </button>
@@ -308,7 +306,7 @@ export const AddressBook: React.FC = () => {
                 <button
                   onClick={() => openEditForm(address)}
                   className="btn btn-secondary flex-center"
-                  style={{ padding: '6px 10px' }}
+                  style={{ padding: '8px 12px' }}
                   title="Edit Address"
                 >
                   <Edit2 size={14} />
@@ -316,7 +314,7 @@ export const AddressBook: React.FC = () => {
                 <button
                   onClick={() => handleDeleteAddress(address.id)}
                   className="btn btn-secondary flex-center"
-                  style={{ padding: '6px 10px' }}
+                  style={{ padding: '8px 12px' }}
                   title="Delete Address"
                   onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--error)')}
                   onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-primary)')}
@@ -391,8 +389,8 @@ export const AddressBook: React.FC = () => {
             <form onSubmit={handleFormSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               {/* Row 1: Label & Recipient */}
               <div className="grid grid-2" style={{ gap: '16px' }}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                  <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Label (e.g. Home, Work)</label>
+                <div className="form-group-premium">
+                  <label className="form-label-premium">Label (e.g. Home, Work)</label>
                   <input
                     type="text"
                     placeholder="Home"
@@ -402,8 +400,8 @@ export const AddressBook: React.FC = () => {
                     disabled={isSaving}
                   />
                 </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                  <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Recipient Name *</label>
+                <div className="form-group-premium">
+                  <label className="form-label-premium">Recipient Name *</label>
                   <input
                     type="text"
                     placeholder="John Doe"
@@ -417,8 +415,8 @@ export const AddressBook: React.FC = () => {
 
               {/* Row 2: Phone & Address Line 1 */}
               <div className="grid grid-2" style={{ gap: '16px' }}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                  <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Phone Number *</label>
+                <div className="form-group-premium">
+                  <label className="form-label-premium">Phone Number *</label>
                   <input
                     type="text"
                     placeholder="+1 555-0199"
@@ -428,8 +426,8 @@ export const AddressBook: React.FC = () => {
                     disabled={isSaving}
                   />
                 </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                  <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Address Line 1 *</label>
+                <div className="form-group-premium">
+                  <label className="form-label-premium">Address Line 1 *</label>
                   <input
                     type="text"
                     placeholder="123 Main St"
@@ -443,8 +441,8 @@ export const AddressBook: React.FC = () => {
 
               {/* Row 3: Address Line 2 & City */}
               <div className="grid grid-2" style={{ gap: '16px' }}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                  <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Address Line 2 (Apt, Suite)</label>
+                <div className="form-group-premium">
+                  <label className="form-label-premium">Address Line 2 (Apt, Suite)</label>
                   <input
                     type="text"
                     placeholder="Apt 4B"
@@ -454,8 +452,8 @@ export const AddressBook: React.FC = () => {
                     disabled={isSaving}
                   />
                 </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                  <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)' }}>City *</label>
+                <div className="form-group-premium">
+                  <label className="form-label-premium">City *</label>
                   <input
                     type="text"
                     placeholder="New York"
@@ -469,8 +467,8 @@ export const AddressBook: React.FC = () => {
 
               {/* Row 4: Region & Postal Code & Country */}
               <div className="grid grid-3" style={{ gap: '16px' }}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                  <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Region/State</label>
+                <div className="form-group-premium">
+                  <label className="form-label-premium">Region/State</label>
                   <input
                     type="text"
                     placeholder="NY"
@@ -480,8 +478,8 @@ export const AddressBook: React.FC = () => {
                     disabled={isSaving}
                   />
                 </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                  <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Postal Code</label>
+                <div className="form-group-premium">
+                  <label className="form-label-premium">Postal Code</label>
                   <input
                     type="text"
                     placeholder="10001"
@@ -491,8 +489,8 @@ export const AddressBook: React.FC = () => {
                     disabled={isSaving}
                   />
                 </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                  <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Country *</label>
+                <div className="form-group-premium">
+                  <label className="form-label-premium">Country *</label>
                   <input
                     type="text"
                     placeholder="United States"
@@ -506,10 +504,10 @@ export const AddressBook: React.FC = () => {
 
               {/* Actions Row */}
               <div style={{ display: 'flex', gap: '16px', marginTop: '20px', justifyContent: 'flex-end' }}>
-                <button type="button" onClick={closeForm} className="btn btn-secondary" disabled={isSaving}>
+                <button type="button" onClick={closeForm} className="btn btn-secondary" style={{ padding: '12px 24px' }} disabled={isSaving}>
                   Cancel
                 </button>
-                <button type="submit" className="btn btn-primary" disabled={isSaving}>
+                <button type="submit" className="btn btn-primary" style={{ padding: '12px 24px' }} disabled={isSaving}>
                   {isSaving ? 'Saving...' : 'Save Address'}
                 </button>
               </div>

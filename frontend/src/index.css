@@ -1161,3 +1161,566 @@ button, input, select, textarea {
     padding-top: 24px;
   }
 }
+
+/* ==========================================================================
+   PREMIUM ATELIER EDITS & MICRO-ANIMATIONS
+   ========================================================================== */
+
+/* Glassmorphism Header */
+.premium-header {
+  border-bottom: 1px solid var(--border);
+  background-color: rgba(250, 249, 246, 0.8) !important;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  transition: all var(--transition-normal);
+}
+@media (prefers-color-scheme: dark) {
+  .premium-header {
+    background-color: rgba(12, 10, 9, 0.8) !important;
+  }
+}
+
+/* Nav Link Hover Micro-Animations */
+.nav-link-premium {
+  position: relative;
+  overflow: hidden;
+}
+.nav-link-premium::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 1px;
+  background-color: var(--accent);
+  transform: scaleX(0);
+  transform-origin: right;
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.nav-link-premium:hover::after,
+.nav-link-premium.is-active::after {
+  transform: scaleX(1);
+  transform-origin: left;
+}
+
+/* Hero Title and Animations */
+.hero-title-editorial {
+  font-size: 5rem;
+  font-weight: 300;
+  letter-spacing: -0.04rem;
+  line-height: 0.95;
+  margin: 24px 0;
+}
+@media (max-width: 768px) {
+  .hero-title-editorial {
+    font-size: 3.2rem;
+  }
+}
+
+/* Premium Swatches & Variant Selectors */
+.swatch-color-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50% !important;
+  padding: 0 !important;
+  border: 1px solid var(--border) !important;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  transition: transform 0.2s ease, border-color 0.2s ease;
+  font-size: 0 !important; /* Hide text */
+}
+.swatch-color-btn::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border: 1px solid transparent;
+  border-radius: 50%;
+  transition: border-color 0.2s ease;
+}
+.swatch-color-btn.is-selected::after {
+  border-color: var(--accent);
+}
+.swatch-color-btn:hover {
+  transform: scale(1.1);
+}
+
+/* Dynamic Product Grid */
+.premium-product-card {
+  position: relative;
+  background-color: var(--bg-card);
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.premium-product-card:hover {
+  transform: translateY(-6px);
+  box-shadow: var(--shadow-xl);
+}
+
+/* Image Hover Zoom */
+.zoom-media img {
+  transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.premium-product-card:hover .zoom-media img {
+  transform: scale(1.04);
+}
+
+/* Custom Accessibility Outline */
+button:focus-visible, a:focus-visible, input:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+/* ==========================================================================
+   DESIGN LAB SPRINT 2 - ACCOUNT & CHECKOUT EDITS
+   ========================================================================== */
+
+/* Premium Form Elements */
+.form-group-premium {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 20px;
+}
+
+.form-label-premium {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.premium-input-container {
+  position: relative;
+  transition: all var(--transition-fast);
+}
+
+.premium-input-container input:focus + svg {
+  color: var(--accent) !important;
+}
+
+/* Address Cards & Checkboxes */
+.address-card-premium {
+  border: 1px solid var(--border);
+  padding: 20px;
+  border-radius: var(--radius-sm);
+  background-color: var(--bg-card);
+  transition: all var(--transition-fast);
+  cursor: pointer;
+  position: relative;
+}
+
+.address-card-premium:hover {
+  border-color: var(--text-secondary);
+}
+
+.address-card-premium.is-selected {
+  border-color: var(--accent);
+  background-color: var(--bg-secondary);
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+
+/* Premium Orders & Progress List */
+.order-card-premium {
+  border: 1px solid var(--border);
+  padding: 24px;
+  border-radius: var(--radius-sm);
+  background-color: var(--bg-card);
+  margin-bottom: 20px;
+  transition: border-color var(--transition-fast);
+}
+
+.order-card-premium:hover {
+  border-color: var(--accent);
+}
+
+/* Premium Status Badge styling */
+.status-badge-premium {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.status-badge-pending {
+  background-color: var(--bg-secondary);
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+}
+
+.status-badge-completed {
+  background-color: rgba(16, 185, 129, 0.1);
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.status-badge-cancelled {
+  background-color: var(--error-bg);
+  color: var(--error);
+  border: 1px solid var(--error);
+}
+
+/* Editorial Order Review Panel */
+.checkout-summary-card {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border);
+  padding: 28px;
+  position: sticky;
+  top: 100px;
+  border-radius: var(--radius-sm);
+}
+
+/* Verification states page wrappers */
+.verification-card-premium {
+  max-width: 500px;
+  width: 100%;
+  padding: 48px 40px;
+  text-align: center;
+  background-color: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+
+/* Home Page Full-Bleed Hero */
+.home-hero-fullscreen {
+  position: relative;
+  height: 95vh;
+  min-height: 600px;
+  overflow: hidden;
+}
+
+.home-hero-fullscreen img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 0;
+  filter: brightness(0.65) contrast(1.1);
+  transition: transform 6s ease-out;
+}
+
+.home-hero-fullscreen:hover img {
+  transform: scale(1.05);
+}
+
+.home-hero-content {
+  position: relative;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  color: white;
+  z-index: 1;
+  padding: 0 40px;
+}
+
+.home-hero-kicker {
+  text-transform: uppercase;
+  letter-spacing: 0.25em;
+  font-size: 0.85rem;
+  margin-bottom: 24px;
+  opacity: 0.9;
+  font-weight: 500;
+}
+
+.home-hero-title {
+  font-family: var(--font-title);
+  font-size: clamp(3.5rem, 8vw, 7rem);
+  line-height: 1.05;
+  font-weight: 700;
+  margin-bottom: 32px;
+  max-width: 900px;
+  letter-spacing: -0.02em;
+}
+
+/* Asymmetric Grid for Home */
+.asymmetric-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: 40px;
+  align-items: center;
+}
+
+.zoom-card {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  text-decoration: none;
+  color: inherit;
+}
+
+.zoom-card-image-wrapper {
+  position: relative;
+  aspect-ratio: 3/4;
+  overflow: hidden;
+  background-color: var(--bg-secondary);
+}
+
+.zoom-card-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.zoom-card:hover .zoom-card-image {
+  transform: scale(1.05);
+}
+
+.zoom-card-content {
+  margin-top: 24px;
+  display: flex;
+  flex-direction: column;
+font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.premium-input-container {
+  position: relative;
+  transition: all var(--transition-fast);
+}
+
+.premium-input-container input:focus + svg {
+  color: var(--accent) !important;
+}
+
+/* Address Cards & Checkboxes */
+.address-card-premium {
+  border: 1px solid var(--border);
+  padding: 20px;
+  border-radius: var(--radius-sm);
+  background-color: var(--bg-card);
+  transition: all var(--transition-fast);
+  cursor: pointer;
+  position: relative;
+}
+
+.address-card-premium:hover {
+  border-color: var(--text-secondary);
+}
+
+.address-card-premium.is-selected {
+  border-color: var(--accent);
+  background-color: var(--bg-secondary);
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+
+/* Premium Orders & Progress List */
+.order-card-premium {
+  border: 1px solid var(--border);
+  padding: 24px;
+  border-radius: var(--radius-sm);
+  background-color: var(--bg-card);
+  margin-bottom: 20px;
+  transition: border-color var(--transition-fast);
+}
+
+.order-card-premium:hover {
+  border-color: var(--accent);
+}
+
+/* Premium Status Badge styling */
+.status-badge-premium {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.status-badge-pending {
+  background-color: var(--bg-secondary);
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+}
+
+.status-badge-completed {
+  background-color: rgba(16, 185, 129, 0.1);
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.status-badge-cancelled {
+  background-color: var(--error-bg);
+  color: var(--error);
+  border: 1px solid var(--error);
+}
+
+/* Editorial Order Review Panel */
+.checkout-summary-card {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border);
+  padding: 28px;
+  position: sticky;
+  top: 100px;
+  border-radius: var(--radius-sm);
+}
+
+/* Verification states page wrappers */
+.verification-card-premium {
+  max-width: 500px;
+  width: 100%;
+  padding: 48px 40px;
+  text-align: center;
+  background-color: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+
+/* Home Page Full-Bleed Hero */
+.home-hero-fullscreen {
+  position: relative;
+  height: 95vh;
+  min-height: 600px;
+  overflow: hidden;
+}
+
+.home-hero-fullscreen img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 0;
+  filter: brightness(0.65) contrast(1.1);
+  transition: transform 6s ease-out;
+}
+
+.home-hero-fullscreen:hover img {
+  transform: scale(1.05);
+}
+
+.home-hero-content {
+  position: relative;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  color: white;
+  z-index: 1;
+  padding: 0 40px;
+}
+
+.home-hero-kicker {
+  text-transform: uppercase;
+  letter-spacing: 0.25em;
+  font-size: 0.85rem;
+  margin-bottom: 24px;
+  opacity: 0.9;
+  font-weight: 500;
+}
+
+.home-hero-title {
+  font-family: var(--font-title);
+  font-size: clamp(3.5rem, 8vw, 7rem);
+  line-height: 1.05;
+  font-weight: 700;
+  margin-bottom: 32px;
+  max-width: 900px;
+  letter-spacing: -0.02em;
+}
+
+/* Asymmetric Grid for Home */
+.asymmetric-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: 40px;
+  align-items: center;
+}
+
+.zoom-card {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  text-decoration: none;
+  color: inherit;
+}
+
+.zoom-card-image-wrapper {
+  position: relative;
+  aspect-ratio: 3/4;
+  overflow: hidden;
+  background-color: var(--bg-secondary);
+}
+
+.zoom-card-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.zoom-card:hover .zoom-card-image {
+  transform: scale(1.05);
+}
+
+.zoom-card-content {
+  margin-top: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.zoom-card-title {
+  font-size: 1.5rem;
+  font-family: var(--font-title);
+  font-weight: 500;
+}
+
+.zoom-card-desc {
+  color: var(--text-secondary);
+  font-size: 1rem;
+}
+
+/* Auth Split Layout */
+  .auth-split-layout {
+    display: flex;
+    width: 100%;
+    height: calc(100vh - 80px);
+    overflow: hidden;
+  }
+  .auth-split-layout-reverse {
+    display: flex;
+    flex-direction: row-reverse;
+    width: 100%;
+    min-height: calc(100vh - 80px);
+  }
+  .auth-image-panel {
+    flex: 1 1 50%;
+    position: relative;
+    overflow: hidden;
+    display: none;
+  }
+  @media (min-width: 900px) {
+    .auth-image-panel {
+      display: block;
+    }
+  }
+  .auth-form-panel {
+    flex: 1 1 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 24px;
+    overflow-y: auto;
+  }
