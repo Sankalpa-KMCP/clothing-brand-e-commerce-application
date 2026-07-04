@@ -22,6 +22,10 @@ public interface RefreshTokenRepository extends JpaRepository<RefreshToken, Long
     int updateStatusByFamilyId(@Param("familyId") UUID familyId, @Param("newStatus") RefreshTokenStatus newStatus);
 
     @Modifying(clearAutomatically = true)
+    @Query("UPDATE RefreshToken r SET r.status = :newStatus WHERE r.user.id = :userId AND r.status = :expectedStatus")
+    int updateStatusByUserId(@Param("userId") Long userId, @Param("expectedStatus") RefreshTokenStatus expectedStatus, @Param("newStatus") RefreshTokenStatus newStatus);
+
+    @Modifying(clearAutomatically = true)
     @Query("UPDATE RefreshToken r SET r.status = :newStatus WHERE r.id = :id AND r.status = :expectedStatus")
     int updateStatusConditionally(@Param("id") Long id, @Param("expectedStatus") RefreshTokenStatus expectedStatus, @Param("newStatus") RefreshTokenStatus newStatus);
 }

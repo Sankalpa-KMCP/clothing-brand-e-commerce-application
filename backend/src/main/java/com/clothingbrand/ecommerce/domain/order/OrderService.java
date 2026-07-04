@@ -48,6 +48,9 @@ public class OrderService {
     private final UserRepository userRepository;
     private final CustomerAddressRepository customerAddressRepository;
     private final OrderDeliveryAddressRepository orderDeliveryAddressRepository;
+    private final com.clothingbrand.ecommerce.config.StripeProperties stripeProperties;
+    private final com.clothingbrand.ecommerce.util.DateTimeProvider dateTimeProvider;
+    private final com.clothingbrand.ecommerce.payment.PaymentReservationRecoveryService paymentReservationRecoveryService;
 
     public OrderService(CartRepository cartRepository,
                         ProductVariantRepository productVariantRepository,
@@ -55,7 +58,10 @@ public class OrderService {
                         OrderStatusHistoryRepository orderStatusHistoryRepository,
                         UserRepository userRepository,
                         CustomerAddressRepository customerAddressRepository,
-                        OrderDeliveryAddressRepository orderDeliveryAddressRepository) {
+                        OrderDeliveryAddressRepository orderDeliveryAddressRepository,
+                        com.clothingbrand.ecommerce.config.StripeProperties stripeProperties,
+                        com.clothingbrand.ecommerce.util.DateTimeProvider dateTimeProvider,
+                        com.clothingbrand.ecommerce.payment.PaymentReservationRecoveryService paymentReservationRecoveryService) {
         this.cartRepository = cartRepository;
         this.productVariantRepository = productVariantRepository;
         this.customerOrderRepository = customerOrderRepository;
@@ -63,6 +69,9 @@ public class OrderService {
         this.userRepository = userRepository;
         this.customerAddressRepository = customerAddressRepository;
         this.orderDeliveryAddressRepository = orderDeliveryAddressRepository;
+        this.stripeProperties = stripeProperties;
+        this.dateTimeProvider = dateTimeProvider;
+        this.paymentReservationRecoveryService = paymentReservationRecoveryService;
     }
 
     record CheckoutItemInput(Long cartId, Long userId, Long productId, Long variantId, Integer requestedQuantity) {}
@@ -450,5 +459,148 @@ public class OrderService {
                         history.getCreatedAt()
                 ))
                 .toList();
+    }
+
+    @Transactional
+    public CustomerOrder reservePaymentSession(Long authenticatedUserId, Long addressId) {
+        if (authenticatedUserId == null) {
+            throw new IllegalArgumentException("Authenticated user ID cannot be null");
+        }
+
+        java.time.OffsetDateTime now = dateTimeProvider.now();
+        java.util.Optional<CustomerOrder> expiredPending = customerOrderRepository
+                .findExpiredPendingPaymentOrderForUpdate(authenticatedUserId, now);
+        if (expiredPending.isPresent()) {
+            paymentReservationRecoveryService.recoverExpiredOrderSynchronously(expiredPending.get().getId());
+        }
+
+        java.util.Optional<CustomerOrder> existingPending = customerOrderRepository
+                .findActivePendingPaymentOrderForUpdate(authenticatedUserId, now);
+        if (existingPending.isPresent()) {
+            return existingPending.get();
+        }
+
+        Cart cart = cartRepository.findByUserIdForUpdate(authenticatedUserId)
+                .orElseThrow(() -> new ResourceConflictException("Cart is empty"));
+
+        if (cart.getItems() == null || cart.getItems().isEmpty()) {
+            throw new ResourceConflictException("Cart is empty");
+        }
+
+        CustomerAddress address;
+        if (addressId == null) {
+            address = customerAddressRepository.findByUserIdAndIsDefaultTrue(authenticatedUserId)
+                    .orElseThrow(() -> new ResourceConflictException("Delivery address is required for checkout"));
+        } else {
+            address = customerAddressRepository.findByIdAndUserId(addressId, authenticatedUserId)
+                    .orElseThrow(() -> new ResourceConflictException("Delivery address is required for checkout"));
+        }
+
+        List<CheckoutItemInput> checkoutInputs = new java.util.ArrayList<>();
+        for (CartItem item : cart.getItems()) {
+            if (item.getQuantity() == null || item.getQuantity() <= 0) {
+                throw new ResourceConflictException("Cart contains unavailable items");
+            }
+            if (item.getProductVariant() == null || item.getProductVariant().getProduct() == null) {
+                throw new ResourceConflictException("Cart contains unavailable items");
+            }
+
+            ProductVariant variant = item.getProductVariant();
+            Product product = variant.getProduct();
+
+            if (!product.getActive()) {
+                throw new ResourceConflictException("Cart contains unavailable items");
+            }
+            checkoutInputs.add(new CheckoutItemInput(
+                    cart.getId(),
+                    authenticatedUserId,
+                    product.getId(),
+                    variant.getId(),
+                    item.getQuantity()
+            ));
+        }
+
+        checkoutInputs.sort(java.util.Comparator.comparing(CheckoutItemInput::variantId));
+
+        for (CheckoutItemInput input : checkoutInputs) {
+            int updatedRows = productVariantRepository.adjustStock(
+                    input.productId(), input.variantId(), -input.requestedQuantity());
+            if (updatedRows == 0) {
+                throw new ResourceConflictException("Cart contains unavailable items");
+            }
+        }
+
+        List<OrderItem> orderItems = new java.util.ArrayList<>();
+        BigDecimal subtotal = BigDecimal.ZERO;
+
+        for (CheckoutItemInput input : checkoutInputs) {
+            ProductVariant currentVariant = productVariantRepository.findById(input.variantId())
+                    .orElseThrow(() -> new ResourceConflictException("Cart contains unavailable items"));
+            Product currentProduct = currentVariant.getProduct();
+
+            if (!currentProduct.getId().equals(input.productId()) || !currentProduct.getActive()) {
+                throw new ResourceConflictException("Cart contains unavailable items");
+            }
+
+            OrderItem orderItem = new OrderItem();
+            orderItem.setOriginalProductId(currentProduct.getId());
+            orderItem.setOriginalVariantId(currentVariant.getId());
+            orderItem.setProductName(currentProduct.getName());
+            orderItem.setProductImageUrl(currentProduct.getImageUrl());
+            orderItem.setSku(currentVariant.getSku());
+            orderItem.setSize(currentVariant.getSize());
+            orderItem.setColor(currentVariant.getColor());
+            orderItem.setUnitPrice(currentVariant.getPrice());
+            orderItem.setQuantity(input.requestedQuantity());
+
+            BigDecimal lineTotal = currentVariant.getPrice().multiply(BigDecimal.valueOf(input.requestedQuantity()));
+            orderItem.setLineTotal(lineTotal);
+
+            orderItems.add(orderItem);
+            subtotal = subtotal.add(lineTotal);
+        }
+
+        User user = userRepository.findById(authenticatedUserId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        CustomerOrder order = new CustomerOrder();
+        order.setUser(user);
+        order.setStatus(OrderStatus.PENDING_PAYMENT);
+        order.setPaymentStatus(PaymentStatus.PENDING);
+        order.setSubtotal(subtotal);
+        order.setTotal(subtotal);
+
+        int timeoutSeconds = stripeProperties.getSessionTimeoutSeconds();
+        order.setReservationExpiresAt(now.plusSeconds(timeoutSeconds));
+
+        for (OrderItem item : orderItems) {
+            order.addItem(item);
+        }
+
+        order = customerOrderRepository.save(order);
+        OrderDeliveryAddress deliveryAddress = new OrderDeliveryAddress(
+                order,
+                address.getRecipientName(),
+                address.getPhoneNumber(),
+                address.getAddressLine1(),
+                address.getAddressLine2(),
+                address.getCity(),
+                address.getRegion(),
+                address.getPostalCode(),
+                address.getCountry()
+        );
+        orderDeliveryAddressRepository.save(deliveryAddress);
+
+        createStatusHistory(order, null, OrderStatus.PENDING_PAYMENT, OrderActorType.CUSTOMER, authenticatedUserId);
+
+        return order;
+    }
+
+    @Transactional
+    public void saveStripeSessionId(Long orderId, String sessionId) {
+        CustomerOrder order = customerOrderRepository.findById(orderId)
+                .orElseThrow(() -> new IllegalArgumentException("Order not found with ID: " + orderId));
+        order.setStripeSessionId(sessionId);
+        customerOrderRepository.save(order);
     }
 }

@@ -6,5 +6,6 @@ public record ErrorResponse(
         int status,
         String error,
         String message,
-        LocalDateTime timestamp
+        LocalDateTime timestamp,
+        String correlationId
 ) {}

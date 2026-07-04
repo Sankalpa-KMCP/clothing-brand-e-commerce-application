@@ -236,8 +236,8 @@ public class CartIntegrationTest {
                 .andExpect(jsonPath("$.cartTotal").value(31.00))
                 .andExpect(jsonPath("$.totalQuantity").value(2));
 
-        assertTrue(cartRepository.findByUserId(customer.getId()).isPresent());
-        assertEquals(1, cartItemRepository.count());
+        Cart savedCart = cartRepository.findByUserId(customer.getId()).orElseThrow();
+        assertEquals(1, savedCart.getItems().size());
     }
 
     @Test
@@ -263,7 +263,7 @@ public class CartIntegrationTest {
                 .andExpect(jsonPath("$.totalQuantity").value(5));
 
         Cart cart = cartRepository.findByUserId(customer.getId()).orElseThrow();
-        assertEquals(1, cartItemRepository.count());
+        assertEquals(1, cart.getItems().size());
     }
 
     @Test

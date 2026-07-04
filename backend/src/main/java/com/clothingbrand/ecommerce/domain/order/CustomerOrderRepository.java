@@ -30,4 +30,18 @@ public interface CustomerOrderRepository extends JpaRepository<CustomerOrder, Lo
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT o FROM CustomerOrder o WHERE o.id = :orderId")
     Optional<CustomerOrder> findByIdForUpdate(@Param("orderId") Long orderId);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT o FROM CustomerOrder o WHERE o.user.id = :userId AND o.status = 'PENDING_PAYMENT' AND o.reservationExpiresAt > :now")
+    Optional<CustomerOrder> findActivePendingPaymentOrderForUpdate(@Param("userId") Long userId, @Param("now") java.time.OffsetDateTime now);
+
+    @Query("SELECT o FROM CustomerOrder o WHERE o.user.id = :userId AND o.status = 'PENDING_PAYMENT' AND o.reservationExpiresAt > :now")
+    Optional<CustomerOrder> findActivePendingPaymentOrder(@Param("userId") Long userId, @Param("now") java.time.OffsetDateTime now);
+
+    @Query("SELECT o.id FROM CustomerOrder o WHERE o.status = com.clothingbrand.ecommerce.domain.order.OrderStatus.PENDING_PAYMENT AND o.paymentStatus = com.clothingbrand.ecommerce.domain.order.PaymentStatus.PENDING AND o.reservationExpiresAt <= :now")
+    java.util.List<Long> findExpiredReservationIds(@Param("now") java.time.OffsetDateTime now);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT o FROM CustomerOrder o WHERE o.user.id = :userId AND o.status = com.clothingbrand.ecommerce.domain.order.OrderStatus.PENDING_PAYMENT AND o.reservationExpiresAt <= :now")
+    Optional<CustomerOrder> findExpiredPendingPaymentOrderForUpdate(@Param("userId") Long userId, @Param("now") java.time.OffsetDateTime now);
 }

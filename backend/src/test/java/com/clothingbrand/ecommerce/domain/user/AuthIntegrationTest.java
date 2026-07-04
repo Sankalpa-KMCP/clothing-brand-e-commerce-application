@@ -11,6 +11,10 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.context.WebApplicationContext;
+import com.clothingbrand.ecommerce.domain.order.CustomerOrderRepository;
+import com.clothingbrand.ecommerce.domain.order.OrderStatusHistoryRepository;
+import com.clothingbrand.ecommerce.domain.order.OrderDeliveryAddressRepository;
+import com.clothingbrand.ecommerce.domain.order.OrderItemRepository;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 
 import static org.hamcrest.Matchers.*;
@@ -38,6 +42,15 @@ class AuthIntegrationTest {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+    @Autowired
+    private CustomerOrderRepository customerOrderRepository;
+    @Autowired
+    private OrderStatusHistoryRepository orderStatusHistoryRepository;
+    @Autowired
+    private OrderDeliveryAddressRepository orderDeliveryAddressRepository;
+    @Autowired
+    private OrderItemRepository orderItemRepository;
+
     private ObjectMapper objectMapper = new ObjectMapper();
 
     @BeforeEach
@@ -46,6 +59,10 @@ class AuthIntegrationTest {
                 .webAppContextSetup(context)
                 .apply(springSecurity())
                 .build();
+        orderStatusHistoryRepository.deleteAll();
+        orderDeliveryAddressRepository.deleteAll();
+        orderItemRepository.deleteAll();
+        customerOrderRepository.deleteAll();
         userRepository.deleteAll();
     }
 

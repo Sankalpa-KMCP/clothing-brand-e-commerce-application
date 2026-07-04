@@ -22,15 +22,21 @@ public class CartService {
     private final CartItemRepository cartItemRepository;
     private final ProductVariantRepository productVariantRepository;
     private final UserRepository userRepository;
+    private final com.clothingbrand.ecommerce.domain.order.CustomerOrderRepository customerOrderRepository;
+    private final com.clothingbrand.ecommerce.util.DateTimeProvider dateTimeProvider;
 
     public CartService(CartRepository cartRepository,
                        CartItemRepository cartItemRepository,
                        ProductVariantRepository productVariantRepository,
-                       UserRepository userRepository) {
+                       UserRepository userRepository,
+                       com.clothingbrand.ecommerce.domain.order.CustomerOrderRepository customerOrderRepository,
+                       com.clothingbrand.ecommerce.util.DateTimeProvider dateTimeProvider) {
         this.cartRepository = cartRepository;
         this.cartItemRepository = cartItemRepository;
         this.productVariantRepository = productVariantRepository;
         this.userRepository = userRepository;
+        this.customerOrderRepository = customerOrderRepository;
+        this.dateTimeProvider = dateTimeProvider;
     }
 
     public CartResponseDto getCurrentCart(Long userId) {
@@ -41,6 +47,7 @@ public class CartService {
 
     @Transactional
     public CartResponseDto addCartItem(Long userId, CartItemRequestDto request) {
+        checkActiveReservation(userId);
         if (request == null || request.variantId() == null || request.quantity() == null || request.quantity() <= 0) {
             throw new IllegalArgumentException("Valid request, variant ID, and positive quantity are required");
         }
@@ -100,6 +107,7 @@ public class CartService {
 
     @Transactional
     public CartResponseDto updateCartItemQuantity(Long userId, Long cartItemId, CartItemUpdateRequestDto request) {
+        checkActiveReservation(userId);
         if (request == null || request.quantity() == null || request.quantity() <= 0) {
             throw new IllegalArgumentException("Valid request and positive quantity are required");
         }
@@ -126,6 +134,7 @@ public class CartService {
 
     @Transactional
     public void removeCartItem(Long userId, Long cartItemId) {
+        checkActiveReservation(userId);
         CartItem cartItem = cartItemRepository.findByIdAndCartUserId(cartItemId, userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Cart item not found with id: " + cartItemId));
 
@@ -175,5 +184,12 @@ public class CartService {
 
     private CartResponseDto emptyCartResponse() {
         return new CartResponseDto(Collections.emptyList(), BigDecimal.ZERO, 0);
+    }
+
+    private void checkActiveReservation(Long userId) {
+        java.time.OffsetDateTime now = dateTimeProvider.now();
+        if (customerOrderRepository.findActivePendingPaymentOrder(userId, now).isPresent()) {
+            throw new ResourceConflictException("Cannot modify cart while a payment is pending");
+        }
     }
 }

@@ -1,14 +1,11 @@
 package com.clothingbrand.ecommerce.domain.user;
 
+import com.clothingbrand.ecommerce.security.SecureTokenService;
+import com.clothingbrand.ecommerce.config.AccountSecurityProperties;
+import com.clothingbrand.ecommerce.util.DateTimeProvider;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
-import java.time.OffsetDateTime;
-import java.util.Base64;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -16,49 +13,33 @@ import java.util.UUID;
 public class RefreshTokenService {
 
     private final RefreshTokenRepository refreshTokenRepository;
-    private final SecureRandom secureRandom = new SecureRandom();
+    private final SecureTokenService secureTokenService;
+    private final DateTimeProvider dateTimeProvider;
+    private final AccountSecurityProperties accountProperties;
 
-    public RefreshTokenService(RefreshTokenRepository refreshTokenRepository) {
+    public RefreshTokenService(RefreshTokenRepository refreshTokenRepository,
+                               SecureTokenService secureTokenService,
+                               DateTimeProvider dateTimeProvider,
+                               AccountSecurityProperties accountProperties) {
         this.refreshTokenRepository = refreshTokenRepository;
+        this.secureTokenService = secureTokenService;
+        this.dateTimeProvider = dateTimeProvider;
+        this.accountProperties = accountProperties;
     }
 
     public record RefreshTokenResult(String rawToken, RefreshToken tokenEntity) {}
 
-    private String generateRawToken() {
-        byte[] bytes = new byte[32];
-        secureRandom.nextBytes(bytes);
-        return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
-    }
-
-    private String hashToken(String rawToken) {
-        try {
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            byte[] hash = digest.digest(rawToken.getBytes(StandardCharsets.UTF_8));
-            StringBuilder hexString = new StringBuilder(2 * hash.length);
-            for (byte b : hash) {
-                String hex = Integer.toHexString(0xff & b);
-                if (hex.length() == 1) {
-                    hexString.append('0');
-                }
-                hexString.append(hex);
-            }
-            return hexString.toString();
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException("SHA-256 algorithm not found", e);
-        }
-    }
-
     @Transactional
     public RefreshTokenResult issueToken(User user, long expirationMs) {
-        String rawToken = generateRawToken();
-        String hash = hashToken(rawToken);
+        String rawToken = secureTokenService.generateOpaqueToken();
+        String hash = secureTokenService.sha256Hex(rawToken);
 
         RefreshToken rt = new RefreshToken();
         rt.setTokenHash(hash);
         rt.setFamilyId(UUID.randomUUID());
         rt.setUser(user);
         rt.setStatus(RefreshTokenStatus.ACTIVE);
-        rt.setExpiresAt(OffsetDateTime.now().plusNanos(expirationMs * 1_000_000L));
+        rt.setExpiresAt(dateTimeProvider.now().plusNanos(expirationMs * 1_000_000L));
 
         rt = refreshTokenRepository.save(rt);
         return new RefreshTokenResult(rawToken, rt);
@@ -66,7 +47,7 @@ public class RefreshTokenService {
 
     @Transactional
     public Optional<RefreshTokenResult> rotateToken(String rawToken, long expirationMs) {
-        String hash = hashToken(rawToken);
+        String hash = secureTokenService.sha256Hex(rawToken);
         Optional<RefreshToken> optionalToken = refreshTokenRepository.findByTokenHash(hash);
 
         if (optionalToken.isEmpty()) {
@@ -76,11 +57,11 @@ public class RefreshTokenService {
         RefreshToken token = optionalToken.get();
 
         // Must not create successor if expired, inactive user, etc.
-        if (token.getExpiresAt().isBefore(OffsetDateTime.now())) {
+        if (token.getExpiresAt().isBefore(dateTimeProvider.now())) {
             return Optional.empty();
         }
 
-        if (token.getUser() == null || !token.getUser().getActive()) {
+        if (token.getUser() == null || !token.getUser().getActive() || !isEmailVerificationSatisfied(token.getUser())) {
             return Optional.empty();
         }
 
@@ -96,15 +77,15 @@ public class RefreshTokenService {
             return Optional.empty();
         }
 
-        String newRaw = generateRawToken();
-        String newHash = hashToken(newRaw);
+        String newRaw = secureTokenService.generateOpaqueToken();
+        String newHash = secureTokenService.sha256Hex(newRaw);
 
         RefreshToken child = new RefreshToken();
         child.setTokenHash(newHash);
         child.setFamilyId(token.getFamilyId());
         child.setUser(token.getUser());
         child.setStatus(RefreshTokenStatus.ACTIVE);
-        child.setExpiresAt(OffsetDateTime.now().plusNanos(expirationMs * 1_000_000L));
+        child.setExpiresAt(dateTimeProvider.now().plusNanos(expirationMs * 1_000_000L));
 
         child = refreshTokenRepository.save(child);
         return Optional.of(new RefreshTokenResult(newRaw, child));
@@ -112,9 +93,25 @@ public class RefreshTokenService {
 
     @Transactional
     public void revokeToken(String rawToken) {
-        String hash = hashToken(rawToken);
+        String hash = secureTokenService.sha256Hex(rawToken);
         refreshTokenRepository.findByTokenHash(hash).ifPresent(token -> {
             refreshTokenRepository.updateStatusConditionally(token.getId(), RefreshTokenStatus.ACTIVE, RefreshTokenStatus.REVOKED_LOGOUT);
         });
+    }
+
+    @Transactional
+    public int revokeActiveTokensForUser(Long userId, RefreshTokenStatus status) {
+        return refreshTokenRepository.updateStatusByUserId(userId, RefreshTokenStatus.ACTIVE, status);
+    }
+
+    private boolean isEmailVerificationSatisfied(User user) {
+        if (!accountProperties.getEmailVerification().isRequired()) {
+            return true;
+        }
+        if (user.getEmailVerifiedAt() != null) {
+            return true;
+        }
+        return accountProperties.getEmailVerification().isLegacyUsersExempt()
+                && Boolean.TRUE.equals(user.getLegacyEmailVerificationExempt());
     }
 }

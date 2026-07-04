@@ -1,5 +1,7 @@
 package com.clothingbrand.ecommerce.security;
 
+import com.clothingbrand.ecommerce.config.AccountSecurityProperties;
+import com.clothingbrand.ecommerce.domain.user.User;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -22,11 +24,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtService jwtService;
     private final UserDetailsService userDetailsService;
     private final CustomAuthenticationEntryPoint authenticationEntryPoint;
+    private final AccountSecurityProperties accountProperties;
 
-    public JwtAuthenticationFilter(JwtService jwtService, UserDetailsService userDetailsService, CustomAuthenticationEntryPoint authenticationEntryPoint) {
+    public JwtAuthenticationFilter(JwtService jwtService,
+                                   UserDetailsService userDetailsService,
+                                   CustomAuthenticationEntryPoint authenticationEntryPoint,
+                                   AccountSecurityProperties accountProperties) {
         this.jwtService = jwtService;
         this.userDetailsService = userDetailsService;
         this.authenticationEntryPoint = authenticationEntryPoint;
+        this.accountProperties = accountProperties;
     }
 
     @Override
@@ -54,7 +61,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     UserDetails userDetails = this.userDetailsService.loadUserByUsername(userEmail);
 
                     // UserDetails implementation checks if active (isEnabled())
-                    if (userDetails.isEnabled()) {
+                    User user = userDetails instanceof UserDetailsImpl userDetailsImpl ? userDetailsImpl.getUser() : null;
+                    Long tokenAuthVersion = jwtService.extractAuthVersion(jwt);
+                    Long userAuthVersion = user == null ? 0L : user.getAuthVersion();
+                    if (userDetails.isEnabled()
+                            && tokenAuthVersion.equals(userAuthVersion == null ? 0L : userAuthVersion)
+                            && isEmailVerificationSatisfied(user)) {
                         UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
                                 userDetails,
                                 null,
@@ -77,5 +89,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         filterChain.doFilter(request, response);
+    }
+
+    private boolean isEmailVerificationSatisfied(User user) {
+        if (user == null || !accountProperties.getEmailVerification().isRequired()) {
+            return true;
+        }
+        if (user.getEmailVerifiedAt() != null) {
+            return true;
+        }
+        return accountProperties.getEmailVerification().isLegacyUsersExempt()
+                && Boolean.TRUE.equals(user.getLegacyEmailVerificationExempt());
     }
 }
