@@ -38,17 +38,26 @@ const Footer: React.FC = () => {
     <footer style={{
       borderTop: '1px solid var(--border)',
       backgroundColor: 'var(--bg-card)',
-      padding: '40px 0',
+      padding: '48px 0',
       color: 'var(--text-secondary)',
-      fontSize: '0.875rem',
+      fontSize: '0.8125rem',
+      letterSpacing: '0.03em',
       transition: 'background-color var(--transition-normal), border-color var(--transition-normal)'
     }}>
-      <div className="container flex-between" style={{ flexDirection: 'column', gap: '16px', textAlign: 'center' }}>
-        <p>&copy; {new Date().getFullYear()} THREAD & Co. All rights reserved.</p>
-        <div style={{ display: 'flex', gap: '20px' }}>
-          <Link to="/catalog">Shop Collection</Link>
-          <a href="#terms">Terms</a>
-          <a href="#privacy">Privacy Policy</a>
+      <div className="container" style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        flexWrap: 'wrap',
+        gap: '24px'
+      }}>
+        <div style={{ textTransform: 'uppercase', fontWeight: 500, color: 'var(--text-muted)' }}>
+          &copy; {new Date().getFullYear()} THREAD & Co.
+        </div>
+        <div style={{ display: 'flex', gap: '32px', textTransform: 'uppercase' }}>
+          <Link to="/catalog" style={{ transition: 'color var(--transition-fast)' }} onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--accent)')} onMouseLeave={(e) => (e.currentTarget.style.color = 'inherit')}>Shop Collection</Link>
+          <a href="#terms" style={{ transition: 'color var(--transition-fast)' }} onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--accent)')} onMouseLeave={(e) => (e.currentTarget.style.color = 'inherit')}>Terms</a>
+          <a href="#privacy" style={{ transition: 'color var(--transition-fast)' }} onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--accent)')} onMouseLeave={(e) => (e.currentTarget.style.color = 'inherit')}>Privacy Policy</a>
         </div>
       </div>
     </footer>

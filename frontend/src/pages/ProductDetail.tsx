@@ -3,7 +3,8 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { request } from '../api/apiClient';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
-import { ArrowLeft, Compass, CheckCircle2, XCircle, ShoppingBag, AlertCircle, Check } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, XCircle, ShoppingBag, AlertCircle, Check } from 'lucide-react';
+import { EditorialMedia } from '../components/EditorialMedia';
 
 interface ProductVariant {
   id: number;
@@ -70,33 +71,23 @@ export const ProductDetail: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="flex-center" style={{ height: '400px' }}>
-        <div style={{
-          border: '4px solid var(--border)',
-          borderTopColor: 'var(--accent)',
-          borderRadius: 'var(--radius-full)',
-          width: '40px',
-          height: '40px',
-          animation: 'spin 1s linear infinite'
-        }} />
-        <style>{`
-          @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-          }
-        `}</style>
+      <div className="product-detail-page container">
+        <div className="atelier-loading">
+          <div className="loader-spinner" />
+        </div>
       </div>
     );
   }
 
   if (error || !product) {
     return (
-      <div className="container" style={{ padding: '40px 20px' }}>
-        <div className="alert alert-error" style={{ marginBottom: '20px' }}>
-          {error || 'Product not found'}
+      <div className="product-detail-page container">
+        <div className="alert alert-error">
+          <AlertCircle size={16} />
+          <span>{error || 'Product not found'}</span>
         </div>
-        <Link to="/catalog" className="btn btn-secondary flex-center" style={{ display: 'inline-flex' }}>
-          <ArrowLeft size={16} />
+        <Link to="/catalog" className="editorial-text-link">
+          <ArrowLeft size={16} style={{ marginRight: '8px' }} />
           <span>Back to Catalog</span>
         </Link>
       </div>
@@ -139,148 +130,86 @@ export const ProductDetail: React.FC = () => {
   };
 
   return (
-    <div className="container animate-fade-in" style={{ padding: '40px 20px 80px 20px' }}>
-      {/* Back Button */}
-      <Link to="/catalog" className="btn btn-secondary flex-center" style={{
-        display: 'inline-flex',
-        marginBottom: '30px',
-        padding: '8px 16px',
-        gap: '6px'
-      }}>
-        <ArrowLeft size={16} />
+    <div className="product-detail-page container animate-fade-in">
+      <Link to="/catalog" className="editorial-text-link" style={{ marginBottom: '32px' }}>
+        <ArrowLeft size={16} style={{ marginRight: '8px' }} />
         <span>Back to Catalog</span>
       </Link>
 
-      {/* Main Grid split */}
-      <div className="grid grid-2" style={{ gap: '40px' }}>
+      <div className="product-detail-grid">
         {/* Left Side: Product Image */}
-        <div style={{
-          backgroundColor: 'var(--bg-secondary)',
-          backgroundImage: product.imageUrl ? `url(${product.imageUrl})` : 'none',
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          borderRadius: 'var(--radius-lg)',
-          border: '1px solid var(--border)',
-          height: '500px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          color: 'var(--text-muted)'
-        }}>
-          {!product.imageUrl && <Compass size={64} />}
+        <div className="product-detail-media-container">
+          <EditorialMedia
+            src={product.imageUrl}
+            alt={product.name}
+            label={product.name}
+          />
         </div>
 
         {/* Right Side: Product Details & Variant Picker */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+        <div className="product-detail-info">
           <div>
-            <span style={{
-              fontSize: '0.875rem',
-              color: 'var(--accent)',
-              fontWeight: 600,
-              textTransform: 'uppercase',
-              letterSpacing: '0.05em'
-            }}>
+            <span className="product-detail-kicker">
               {product.category?.name}
             </span>
-            <h1 className="title-medium" style={{ marginTop: '4px', marginBottom: '12px' }}>
+            <h1 className="product-detail-title">
               {product.name}
             </h1>
             
             {/* Price display */}
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px', marginBottom: '8px' }}>
-              <span style={{
-                fontSize: '2rem',
-                fontWeight: 800,
-                color: 'var(--text-primary)'
-              }}>
+            <div className="product-detail-price-block">
+              <span className="product-detail-price">
                 {selectedVariant ? `$${selectedVariant.price.toFixed(2)}` : `$${startingPrice.toFixed(2)}`}
               </span>
               {!selectedVariant && (
-                <span style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>starting price</span>
+                <span className="product-detail-starting">starting price</span>
               )}
             </div>
 
             {/* In Stock Badge */}
             {selectedVariant ? (
               selectedVariant.inStock ? (
-                <span className="flex-center" style={{
-                  display: 'inline-flex',
-                  gap: '6px',
-                  backgroundColor: 'var(--success-bg)',
-                  color: 'var(--success)',
-                  padding: '4px 10px',
-                  borderRadius: 'var(--radius-full)',
-                  fontSize: '0.875rem',
-                  fontWeight: 600
-                }}>
+                <span className="product-detail-stock-badge product-detail-stock-in">
                   <CheckCircle2 size={14} />
                   <span>In Stock</span>
                 </span>
               ) : (
-                <span className="flex-center" style={{
-                  display: 'inline-flex',
-                  gap: '6px',
-                  backgroundColor: 'var(--error-bg)',
-                  color: 'var(--error)',
-                  padding: '4px 10px',
-                  borderRadius: 'var(--radius-full)',
-                  fontSize: '0.875rem',
-                  fontWeight: 600
-                }}>
+                <span className="product-detail-stock-badge product-detail-stock-out">
                   <XCircle size={14} />
                   <span>Out of Stock</span>
                 </span>
               )
             ) : (
-              <span style={{
-                fontSize: '0.875rem',
-                color: 'var(--text-muted)',
-                fontStyle: 'italic'
-              }}>
+              <span className="product-detail-stock-prompt">
                 Select options below to view availability
               </span>
             )}
           </div>
 
-          <hr style={{ border: 'none', borderTop: '1px solid var(--border)' }} />
+          <hr className="product-detail-divider" />
 
           {/* Description */}
-          <div>
-            <h3 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '8px' }}>Description</h3>
-            <p style={{ color: 'var(--text-secondary)', lineHeight: 1.6 }}>
-              {product.description || 'No description provided for this product.'}
-            </p>
+          <div className="product-detail-description">
+            <h3>Description</h3>
+            <p>{product.description || 'No description provided for this product.'}</p>
           </div>
 
           {/* Option selectors */}
           {product.variants.length > 0 && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            <div className="product-detail-selectors">
               {/* Color Picker */}
-              <div>
-                <span style={{
-                  fontSize: '0.875rem',
-                  fontWeight: 600,
-                  color: 'var(--text-secondary)',
-                  display: 'block',
-                  marginBottom: '10px'
-                }}>
-                  Color: <span style={{ fontWeight: 500, color: 'var(--text-primary)' }}>{selectedColor}</span>
-                </span>
-                <div style={{ display: 'flex', gap: '10px' }}>
+              <div className="product-detail-selector-group">
+                <h4>
+                  Color: <span>{selectedColor}</span>
+                </h4>
+                <div className="product-detail-options">
                   {colors.map((color) => {
                     const isSelected = selectedColor === color;
                     return (
                       <button
                         key={color}
                         onClick={() => setSelectedColor(color)}
-                        className="btn"
-                        style={{
-                          padding: '8px 16px',
-                          fontSize: '0.875rem',
-                          border: isSelected ? '2px solid var(--border-focus)' : '1px solid var(--border)',
-                          backgroundColor: isSelected ? 'var(--bg-secondary)' : 'var(--bg-card)',
-                          fontWeight: isSelected ? 600 : 400
-                        }}
+                        className={`product-detail-option-btn ${isSelected ? 'is-selected' : ''}`}
                       >
                         {color}
                       </button>
@@ -290,17 +219,11 @@ export const ProductDetail: React.FC = () => {
               </div>
 
               {/* Size Picker */}
-              <div>
-                <span style={{
-                  fontSize: '0.875rem',
-                  fontWeight: 600,
-                  color: 'var(--text-secondary)',
-                  display: 'block',
-                  marginBottom: '10px'
-                }}>
-                  Size: <span style={{ fontWeight: 500, color: 'var(--text-primary)' }}>{selectedSize}</span>
-                </span>
-                <div style={{ display: 'flex', gap: '10px' }}>
+              <div className="product-detail-selector-group">
+                <h4>
+                  Size: <span>{selectedSize}</span>
+                </h4>
+                <div className="product-detail-options">
                   {sizes.map((size) => {
                     const isSelected = selectedSize === size;
                     // Check if this specific size is available in currently selected color
@@ -312,17 +235,7 @@ export const ProductDetail: React.FC = () => {
                         key={size}
                         disabled={!hasVariant}
                         onClick={() => setSelectedSize(size)}
-                        className="btn"
-                        style={{
-                          padding: '8px 16px',
-                          minWidth: '48px',
-                          fontSize: '0.875rem',
-                          border: isSelected ? '2px solid var(--border-focus)' : '1px solid var(--border)',
-                          backgroundColor: isSelected ? 'var(--bg-secondary)' : 'var(--bg-card)',
-                          fontWeight: isSelected ? 600 : 400,
-                          opacity: hasVariant ? 1 : 0.3,
-                          cursor: hasVariant ? 'pointer' : 'not-allowed'
-                        }}
+                        className={`product-detail-option-btn ${isSelected ? 'is-selected' : ''}`}
                       >
                         {size}
                       </button>
@@ -335,36 +248,26 @@ export const ProductDetail: React.FC = () => {
 
           {/* Add to Bag Feedback Alerts */}
           {addError && (
-            <div className="alert alert-error animate-fade-in" style={{ marginTop: '20px', fontSize: '0.875rem', padding: '12px' }}>
+            <div className="alert alert-error animate-fade-in" style={{ marginTop: '32px' }}>
               <AlertCircle size={16} />
               <span>{addError}</span>
             </div>
           )}
           {addSuccess && (
-            <div className="alert alert-success animate-fade-in" style={{ marginTop: '20px', fontSize: '0.875rem', padding: '12px' }}>
+            <div className="alert alert-success animate-fade-in" style={{ marginTop: '32px' }}>
               <Check size={16} />
               <span>Added to bag successfully!</span>
             </div>
           )}
 
           {/* Add to Bag Button */}
-          <div style={{ marginTop: '20px' }}>
+          <div className="product-detail-actions">
             <button
               disabled={!selectedVariant || !selectedVariant.inStock || isAdding}
               className="btn btn-primary"
-              style={{
-                width: '100%',
-                padding: '14px',
-                fontSize: '1rem',
-                fontWeight: 600,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '8px'
-              }}
               onClick={handleAddToBag}
             >
-              <ShoppingBag size={18} />
+              <ShoppingBag size={18} style={{ marginRight: '8px' }} />
               <span>{isAdding ? 'Adding to Bag...' : 'Add to Bag'}</span>
             </button>
           </div>

@@ -1,7 +1,8 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { request } from '../api/apiClient';
-import { Search, Compass, SlidersHorizontal, ArrowLeft, ArrowRight } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Compass, Search, SlidersHorizontal, AlertCircle } from 'lucide-react';
+import { EditorialMedia } from '../components/EditorialMedia';
 
 interface Category {
   id: number;
@@ -23,6 +24,10 @@ interface PaginatedResponse<T> {
   size: number;
   number: number;
 }
+
+const formatPrice = (price?: number) => (
+  price !== undefined ? `$${price.toFixed(2)}` : 'N/A'
+);
 
 export const Catalog: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -113,76 +118,52 @@ export const Catalog: React.FC = () => {
     });
   };
 
-  return (
-    <div className="container animate-fade-in" style={{ padding: '40px 20px 80px 20px' }}>
-      <div style={{ marginBottom: '30px' }}>
-        <h1 className="title-medium" style={{ marginBottom: '8px' }}>Store Collection</h1>
-        <p style={{ color: 'var(--text-secondary)' }}>Explore our range of premium minimalist apparel.</p>
-      </div>
+  const selectedCategory = categories.find((cat) => categoryIdParam === cat.id.toString());
+  const productCount = productsResponse?.totalElements ?? 0;
 
-      {/* Controls Bar: Search & Category Filters */}
-      <div style={{
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '20px',
-        marginBottom: '40px',
-        backgroundColor: 'var(--bg-card)',
-        padding: '24px',
-        borderRadius: 'var(--radius-lg)',
-        border: '1px solid var(--border)'
-      }}>
-        {/* Search Input Row */}
-        <form onSubmit={handleSearchSubmit} style={{
-          position: 'relative',
-          display: 'flex',
-          gap: '12px'
-        }}>
-          <div style={{ position: 'relative', flexGrow: 1 }}>
-            <Search size={18} style={{
-              position: 'absolute',
-              left: '16px',
-              top: '50%',
-              transform: 'translateY(-50%)',
-              color: 'var(--text-muted)'
-            }} />
+  return (
+    <div className="catalog-page container animate-fade-in">
+      <section className="catalog-header" aria-labelledby="catalog-title">
+        <div>
+          <span className="atelier-kicker">The collection</span>
+          <h1 id="catalog-title" className="title-medium">Store Collection</h1>
+          <p>Explore our range of premium minimalist apparel.</p>
+        </div>
+        <div className="catalog-header-note">
+          <span>{selectedCategory?.name || 'All departments'}</span>
+          <strong>{productCount}</strong>
+          <small>{productCount === 1 ? 'piece' : 'pieces'}</small>
+        </div>
+      </section>
+
+      <section className="catalog-controls" aria-label="Catalog filters">
+        <form onSubmit={handleSearchSubmit} className="catalog-search-form">
+          <label className="catalog-search-label" htmlFor="catalog-search">
+            Search products
+          </label>
+          <div className="catalog-search-input">
+            <Search size={18} aria-hidden="true" />
             <input
+              id="catalog-search"
               type="text"
               placeholder="Search products..."
               className="input-field"
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
-              style={{ paddingLeft: '48px' }}
             />
           </div>
           <button type="submit" className="btn btn-primary">Search</button>
         </form>
 
-        {/* Category Pills Filters */}
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'center' }}>
-          <span style={{
-            fontSize: '0.875rem',
-            fontWeight: 600,
-            color: 'var(--text-secondary)',
-            marginRight: '8px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px'
-          }}>
-            <SlidersHorizontal size={14} />
+        <div className="catalog-category-rail">
+          <span className="catalog-filter-label">
+            <SlidersHorizontal size={14} aria-hidden="true" />
             Categories:
           </span>
-          
+
           <button
             onClick={() => handleCategorySelect('')}
-            className="btn"
-            style={{
-              padding: '6px 14px',
-              fontSize: '0.875rem',
-              borderRadius: 'var(--radius-full)',
-              backgroundColor: !categoryIdParam ? 'var(--accent-light)' : 'transparent',
-              color: !categoryIdParam ? 'var(--accent)' : 'var(--text-secondary)',
-              border: !categoryIdParam ? '1px solid var(--accent)' : '1px solid var(--border)',
-            }}
+            className={`catalog-filter-pill ${!categoryIdParam ? 'is-selected' : ''}`}
           >
             All Items
           </button>
@@ -193,52 +174,36 @@ export const Catalog: React.FC = () => {
               <button
                 key={cat.id}
                 onClick={() => handleCategorySelect(cat.id.toString())}
-                className="btn"
-                style={{
-                  padding: '6px 14px',
-                  fontSize: '0.875rem',
-                  borderRadius: 'var(--radius-full)',
-                  backgroundColor: isSelected ? 'var(--accent-light)' : 'transparent',
-                  color: isSelected ? 'var(--accent)' : 'var(--text-secondary)',
-                  border: isSelected ? '1px solid var(--accent)' : '1px solid var(--border)',
-                }}
+                className={`catalog-filter-pill ${isSelected ? 'is-selected' : ''}`}
               >
                 {cat.name}
               </button>
             );
           })}
         </div>
-      </div>
+      </section>
 
-      {/* Error State */}
-      {error && <div className="alert alert-error">{error}</div>}
-
-      {/* Loading Grid */}
       {isLoading ? (
-        <div className="flex-center" style={{ height: '300px' }}>
-          <div style={{
-            border: '4px solid var(--border)',
-            borderTopColor: 'var(--accent)',
-            borderRadius: 'var(--radius-full)',
-            width: '40px',
-            height: '40px',
-            animation: 'spin 1s linear infinite'
-          }} />
+        <div className="catalog-loading" role="status" aria-label="Loading products">
+          <div className="loader-spinner" />
+        </div>
+      ) : error ? (
+        <div className="catalog-error empty-state" role="alert">
+          <AlertCircle size={44} aria-hidden="true" />
+          <h3 className="title-small">An error occurred</h3>
+          <p>{error}</p>
+          <button
+            onClick={() => fetchProducts()}
+            className="btn btn-secondary"
+          >
+            Try Again
+          </button>
         </div>
       ) : !productsResponse || productsResponse.content.length === 0 ? (
-        /* Empty State */
-        <div style={{
-          textAlign: 'center',
-          padding: '80px 20px',
-          backgroundColor: 'var(--bg-card)',
-          borderRadius: 'var(--radius-lg)',
-          border: '1px solid var(--border)'
-        }}>
-          <Compass size={48} style={{ color: 'var(--text-muted)', marginBottom: '16px' }} />
-          <h3 className="title-small" style={{ marginBottom: '8px' }}>No products found</h3>
-          <p style={{ color: 'var(--text-secondary)', marginBottom: '24px' }}>
-            We couldn't find any products matching your current filters.
-          </p>
+        <div className="catalog-empty empty-state">
+          <Compass size={44} aria-hidden="true" />
+          <h3 className="title-small">No products found</h3>
+          <p>We couldn't find any products matching your current filters.</p>
           <button
             onClick={() => {
               setSearchParams({});
@@ -250,128 +215,58 @@ export const Catalog: React.FC = () => {
           </button>
         </div>
       ) : (
-        /* Products Grid */
-        <div>
-          <div className="grid grid-4" style={{ marginBottom: '50px' }}>
-            {productsResponse.content.map((product) => (
+        <section aria-label="Products">
+          <div className="product-editorial-grid catalog-product-grid">
+            {productsResponse.content.map((product, index) => (
               <Link
                 key={product.id}
                 to={`/products/${product.id}`}
-                className="card"
-                style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  height: '400px'
-                }}
+                className="product-editorial-card"
+                aria-label={`${product.name}, ${formatPrice(product.startingPrice)} starting price`}
               >
-                {/* Product Image */}
-                <div style={{
-                  height: '260px',
-                  backgroundColor: 'var(--bg-secondary)',
-                  backgroundImage: product.imageUrl ? `url(${product.imageUrl})` : 'none',
-                  backgroundSize: 'cover',
-                  backgroundPosition: 'center',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: 'var(--text-muted)'
-                }}>
-                  {!product.imageUrl && <Compass size={40} />}
-                </div>
-
-                {/* Details */}
-                <div style={{
-                  padding: '16px',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  justifyContent: 'space-between',
-                  flexGrow: 1
-                }}>
-                  <div>
-                    <span style={{
-                      fontSize: '0.75rem',
-                      textTransform: 'uppercase',
-                      color: 'var(--text-muted)',
-                      fontWeight: 600,
-                      display: 'block',
-                      marginBottom: '4px'
-                    }}>
-                      {product.categoryName}
-                    </span>
-                    <h3 style={{
-                      fontSize: '1rem',
-                      fontWeight: 600,
-                      color: 'var(--text-primary)',
-                      marginBottom: '8px',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap'
-                    }}>
-                      {product.name}
-                    </h3>
-                  </div>
-                  <div>
-                    <span style={{
-                      fontSize: '1.125rem',
-                      fontWeight: 700,
-                      color: 'var(--accent)'
-                    }}>
-                      {product.startingPrice !== undefined ? (
-                        `$${product.startingPrice.toFixed(2)}`
-                      ) : (
-                        'N/A'
-                      )}
-                    </span>
-                    <span style={{
-                      fontSize: '0.75rem',
-                      color: 'var(--text-muted)',
-                      marginLeft: '6px'
-                    }}>
-                      starting price
-                    </span>
+                <EditorialMedia src={product.imageUrl} alt={product.name} label={product.name} />
+                <div className="product-editorial-copy">
+                  <span>{product.categoryName}</span>
+                  <h3>{product.name}</h3>
+                  <div className="product-card-meta">
+                    <p>
+                      <strong>{formatPrice(product.startingPrice)}</strong>
+                      <small>starting price</small>
+                    </p>
+                    <em>{String(index + 1 + pageParam * productsResponse.size).padStart(2, '0')}</em>
                   </div>
                 </div>
               </Link>
             ))}
           </div>
 
-          {/* Pagination Controls */}
           {productsResponse.totalPages > 1 && (
-            <div className="flex-center" style={{ gap: '16px' }}>
+            <nav className="catalog-pagination" aria-label="Catalog pagination">
               <button
                 onClick={() => handlePageChange(pageParam - 1)}
                 disabled={pageParam === 0}
-                className="btn btn-secondary flex-center"
-                style={{ padding: '8px 16px' }}
+                className="btn btn-secondary"
               >
                 <ArrowLeft size={16} />
                 <span>Prev</span>
               </button>
 
-              <span style={{ fontSize: '0.925rem', fontWeight: 500 }}>
+              <span>
                 Page {pageParam + 1} of {productsResponse.totalPages}
               </span>
 
               <button
                 onClick={() => handlePageChange(pageParam + 1)}
                 disabled={pageParam >= productsResponse.totalPages - 1}
-                className="btn btn-secondary flex-center"
-                style={{ padding: '8px 16px' }}
+                className="btn btn-secondary"
               >
                 <span>Next</span>
                 <ArrowRight size={16} />
               </button>
-            </div>
+            </nav>
           )}
-        </div>
+        </section>
       )}
-
-      <style>{`
-        @keyframes spin {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(360deg); }
-        }
-      `}</style>
     </div>
   );
 };
