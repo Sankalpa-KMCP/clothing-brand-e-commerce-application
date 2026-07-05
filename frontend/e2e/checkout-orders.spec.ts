@@ -180,9 +180,10 @@ test('E2E Customer Checkout and Orders Journey', async () => {
   // --- Step 4: Cart Item and Total Display ---
   await clientNavigate(page, '/cart');
   await expect(page.locator(`text=${seededProduct!.name}`)).toBeVisible();
-  await expect(page.locator('text=Size: M | Color: Black')).toBeVisible();
+  await expect(page.locator('text=Color: Black')).toBeVisible();
+  await expect(page.locator('text=Size: M')).toBeVisible();
   await expect(page.getByRole('main').getByText('1', { exact: true })).toBeVisible();
-  await expect(page.getByText('$49.99 ea')).toBeVisible();
+  await expect(page.getByText('LKR 49.99 ea')).toBeVisible();
 
   // --- Step 5: Cart-with-no-Address Checkout Behavior ---
   await clientNavigate(page, '/checkout');
@@ -236,7 +237,7 @@ test('E2E Customer Checkout and Orders Journey', async () => {
   await expect(page.getByRole('heading', { name: `Order #${orderId}` })).toBeVisible();
   await expect(page.locator('h1').getByText('PLACED')).toBeVisible();
   await expect(page.locator(`text=${seededProduct!.name}`)).toBeVisible();
-  await expect(page.getByText('Qty: 1 × $49.99')).toBeVisible();
+  await expect(page.getByText('Qty: 1 × LKR 49.99')).toBeVisible();
   await expect(page.locator('text=E2E Recipient')).toBeVisible();
   await expect(page.locator('text=123 Main St')).toBeVisible();
   await expect(page.locator('text=Order History')).toBeVisible();
