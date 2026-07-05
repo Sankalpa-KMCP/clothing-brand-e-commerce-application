@@ -31,8 +31,8 @@ management:
 
 app:
   cors:
-    allowed-origins: ${CORS_ALLOWED_ORIGINS:https://clothing-brand-frontend.onrender.com}
+    allowed-origins: ${CORS_ALLOWED_ORIGINS}
   upload:
-    dir: ${UPLOAD_DIR:/app/uploads}
-    base-url: ${UPLOAD_BASE_URL:https://clothing-brand-backend.onrender.com/uploads}
+    dir: ${UPLOAD_DIR}
+    base-url: ${UPLOAD_BASE_URL}
 
