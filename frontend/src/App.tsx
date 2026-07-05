@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Link, useNavigate } from 'react-router-do
 import { AuthProvider } from './context/AuthContext';
 import { CartProvider } from './context/CartContext';
 import { ProtectedRoute } from './components/ProtectedRoute';
+import { AdminRoute } from './components/AdminRoute';
 import { Navbar } from './components/Navbar';
 import { Home } from './pages/Home';
 import { Catalog } from './pages/Catalog';
@@ -21,6 +22,15 @@ import { VerificationSent } from './pages/VerificationSent';
 import { VerifyEmail } from './pages/VerifyEmail';
 import { ForgotPassword } from './pages/ForgotPassword';
 import { ResetPassword } from './pages/ResetPassword';
+
+// Admin Pages
+import { AdminLayout } from './components/admin/AdminLayout';
+import { AdminDashboard } from './pages/admin/AdminDashboard';
+import { AdminProducts } from './pages/admin/AdminProducts';
+import { AdminProductForm } from './pages/admin/AdminProductForm';
+import { AdminOrders } from './pages/admin/AdminOrders';
+import { AdminOrderDetail } from './pages/admin/AdminOrderDetail';
+
 import './App.css';
 
 const E2ENavigator: React.FC = () => {
@@ -147,6 +157,20 @@ const App: React.FC = () => {
                     <OrderDetail />
                   </ProtectedRoute>
                 } />
+
+                {/* Admin Routes */}
+                <Route path="/admin" element={
+                  <AdminRoute>
+                    <AdminLayout />
+                  </AdminRoute>
+                }>
+                  <Route index element={<AdminDashboard />} />
+                  <Route path="products" element={<AdminProducts />} />
+                  <Route path="products/new" element={<AdminProductForm />} />
+                  <Route path="products/:id/edit" element={<AdminProductForm />} />
+                  <Route path="orders" element={<AdminOrders />} />
+                  <Route path="orders/:id" element={<AdminOrderDetail />} />
+                </Route>
               </Routes>
             </main>
             <Footer />

@@ -5,6 +5,7 @@ import { request } from '../api/apiClient';
 interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
+  isAdmin: boolean;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
   register: (
@@ -150,6 +151,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       value={{
         user,
         isAuthenticated: !!user,
+        isAdmin: user?.role === 'ROLE_ADMIN' || user?.role === 'ADMIN',
         isLoading,
         login,
         register,

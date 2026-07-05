@@ -67,7 +67,7 @@ export const Register: React.FC = () => {
     <div className="animate-fade-in auth-split-layout-reverse" style={{ backgroundColor: 'var(--bg-primary)' }}>
       {/* Image Panel */}
       <div className="auth-image-panel">
-        <img src="/assets/hero_secondary_1783164753082.jpg" alt="VÉLURE Lifestyle" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+        <img src="/assets/velure_register_hero_alt_1783237099499.jpg" alt="VÉLURE Lifestyle" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
         <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(0,0,0,0.1)' }} />
         <div style={{ position: 'absolute', bottom: '60px', left: '60px', color: 'white' }}>
           <h2 style={{ fontFamily: 'var(--font-title)', fontSize: '3rem', letterSpacing: '0.05em', marginBottom: '8px' }}>VÉLURE</h2>

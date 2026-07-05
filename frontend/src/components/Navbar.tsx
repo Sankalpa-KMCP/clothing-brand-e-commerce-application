@@ -5,7 +5,7 @@ import { useCart } from '../context/CartContext';
 import { User, LogOut, LogIn, Menu, X } from 'lucide-react';
 
 export const Navbar: React.FC = () => {
-  const { user, logout } = useAuth();
+  const { user, logout, isAdmin } = useAuth();
   const { cartCount, clearCart } = useCart();
   const navigate = useNavigate();
   const location = useLocation();
@@ -103,6 +103,11 @@ export const Navbar: React.FC = () => {
 
           {user ? (
             <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
+              {isAdmin && (
+                <Link to="/admin" style={{...linkStyle('/admin'), color: 'var(--accent)', fontWeight: 600}} className={linkClassName('/admin')}>
+                  <span>Admin</span>
+                </Link>
+              )}
               <Link to="/profile" style={linkStyle('/profile')} className={linkClassName('/profile')}>
                 <User size={16} strokeWidth={1.5} style={{ marginRight: '-2px' }} />
                 <span>{user.firstName}</span>
@@ -178,6 +183,11 @@ export const Navbar: React.FC = () => {
           </Link>
           {user ? (
             <>
+              {isAdmin && (
+                <Link to="/admin" style={{...linkStyle('/admin'), color: 'var(--accent)', fontWeight: 600}} className={linkClassName('/admin')} onClick={() => setMobileMenuOpen(false)}>
+                  <span>Admin Panel</span>
+                </Link>
+              )}
               <Link to="/profile" style={linkStyle('/profile')} className={linkClassName('/profile')} onClick={() => setMobileMenuOpen(false)}>
                 <User size={16} strokeWidth={1.5} />
                 <span>{user.firstName}</span>
