@@ -172,6 +172,7 @@ public class AdminBootstrapIntegrationTest {
                     .web(WebApplicationType.NONE);
 
             context = builder.run(
+                    "--spring.datasource.hikari.maximum-pool-size=1",
                     "--app.admin.bootstrap.enabled=true",
                     "--app.admin.bootstrap.email=" + failingBootstrapEmail,
                     "--app.admin.bootstrap.password="
