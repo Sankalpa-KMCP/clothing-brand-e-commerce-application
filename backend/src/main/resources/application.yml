@@ -32,6 +32,9 @@ server:
   port: ${SERVER_PORT:8080}
 
 app:
+  security:
+    metrics:
+      token: ${METRICS_TOKEN:dev-metrics-token-change-me}
   storage:
     type: ${STORAGE_TYPE:local}
     s3:
