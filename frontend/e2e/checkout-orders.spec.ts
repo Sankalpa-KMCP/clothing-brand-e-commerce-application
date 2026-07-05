@@ -35,8 +35,8 @@ test.beforeAll(async ({ request, browser }) => {
       throw new Error(`Actuator health status: ${health.status()}`);
     }
     const data = await health.json();
-    if (data.components?.db?.status !== 'UP') {
-      throw new Error(`Database status is not UP: ${JSON.stringify(data)}`);
+    if (data.status !== 'UP') {
+      throw new Error(`Backend status is not UP: ${JSON.stringify(data)}`);
     }
   } catch (error) {
     throw new Error(
