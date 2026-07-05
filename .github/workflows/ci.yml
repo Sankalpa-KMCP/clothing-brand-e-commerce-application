@@ -64,10 +64,15 @@ jobs:
           cd backend
           nohup ./mvnw spring-boot:run > backend.log 2>&1 &
           echo "Waiting for backend actuator health check to be UP..."
-          for i in {1..30}; do
-            if curl -s http://localhost:8080/actuator/health | grep -q '"status":"UP"'; then
+          for i in {1..60}; do
+            if curl -fsS http://localhost:8080/actuator/health | grep -q '"status":"UP"'; then
               echo "Backend is healthy!"
               break
+            fi
+            if [ $i -eq 60 ]; then
+              echo "Backend failed to start in time!"
+              cat backend.log
+              exit 1
             fi
             sleep 2
           done
