@@ -163,7 +163,7 @@ test('E2E Customer Checkout and Orders Journey', async () => {
   // --- Step 2: Empty Cart Checkout Behavior ---
   await clientNavigate(page, '/checkout');
   await expect(page.locator('text=Your bag is empty')).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Place Order' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: /Place Order|Complete Order/i })).toHaveCount(0);
 
   // --- Step 3: Product Variant Selection and Add-to-Cart ---
   expect(seededProduct).not.toBeNull();
@@ -188,7 +188,7 @@ test('E2E Customer Checkout and Orders Journey', async () => {
   // --- Step 5: Cart-with-no-Address Checkout Behavior ---
   await clientNavigate(page, '/checkout');
   await expect(page.locator('text=You don\'t have any saved addresses. Please add one to continue.')).toBeVisible();
-  const placeOrderBtn = page.getByRole('button', { name: 'Place Order' });
+  const placeOrderBtn = page.getByRole('button', { name: /Place Order|Complete Order/i });
   await expect(placeOrderBtn).toBeDisabled();
 
   // --- Step 6: Create Delivery Address ---
@@ -215,7 +215,7 @@ test('E2E Customer Checkout and Orders Journey', async () => {
     await route.continue();
   });
 
-  const placeOrderSubmitBtn = page.getByRole('button', { name: 'Place Order' });
+  const placeOrderSubmitBtn = page.getByRole('button', { name: /Place Order|Complete Order/i });
   await placeOrderSubmitBtn.click();
   try {
     await placeOrderSubmitBtn.click({ force: true, timeout: 300 });
